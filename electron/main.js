@@ -13,10 +13,9 @@ function checkAdmin() {
   try {
     require("child_process").execSync("net session", { stdio: "ignore" });
   } catch {
-    const exePath = process.execPath;
     try {
       require("child_process").execSync(
-        `powershell -Command "Start-Process '${exePath}' -Verb RunAs"`,
+        `powershell -Command "Start-Process '${process.execPath}' -Verb RunAs"`,
         { stdio: "ignore" }
       );
     } catch {}
@@ -47,46 +46,37 @@ function createWindow() {
   }
 
   mainWindow.once("ready-to-show", () => mainWindow.show());
-
-  mainWindow.on("close", (e) => {
-    e.preventDefault();
-    mainWindow.hide();
-  });
+  mainWindow.on("close", (e) => { e.preventDefault(); mainWindow.hide(); });
 }
 
 function createTray() {
-  // Use a simple fallback if icon not found
-  const iconPath = path.join(__dirname, "../assets/tray-icon.png");
   let icon;
   try {
+    const iconPath = path.join(__dirname, "../assets/tray-icon.png");
     icon = nativeImage.createFromPath(iconPath).resize({ width: 16, height: 16 });
   } catch {
     icon = nativeImage.createEmpty();
   }
-
   tray = new Tray(icon);
-  tray.setToolTip("WinForge");
-
+  tray.setToolTip("Vapers Opti");
   const contextMenu = Menu.buildFromTemplate([
-    { label: "Open WinForge", click: () => { mainWindow?.show(); mainWindow?.focus(); } },
+    { label: "Open Vapers Opti", click: () => { mainWindow?.show(); mainWindow?.focus(); } },
     { type: "separator" },
     { label: "Quit", click: () => app.exit(0) },
   ]);
-
   tray.setContextMenu(contextMenu);
   tray.on("double-click", () => { mainWindow?.show(); mainWindow?.focus(); });
 }
 
 function getBackendPath() {
-  if (isDev) return path.join(__dirname, "../scripts/WinForge-Backend.ps1");
-  return path.join(process.resourcesPath, "scripts/WinForge-Backend.ps1");
+  if (isDev) return path.join(__dirname, "../scripts/VapersOpti-Backend.ps1");
+  return path.join(process.resourcesPath, "scripts/VapersOpti-Backend.ps1");
 }
 
 function runPowerShell(args = []) {
   return new Promise((resolve, reject) => {
     const scriptPath = getBackendPath();
     const psArgs = ["-NoProfile", "-NonInteractive", "-ExecutionPolicy", "Bypass", "-File", scriptPath, ...args];
-
     const ps = spawn("powershell.exe", psArgs, { windowsHide: true, stdio: ["pipe", "pipe", "pipe"] });
     const results = [];
 
@@ -115,7 +105,8 @@ function runPowerShell(args = []) {
   });
 }
 
-// IPC Handlers
+// ── IPC HANDLERS ──────────────────────────────────────────────────────────
+
 ipcMain.handle("scan-system", async () => {
   try {
     const data = await runPowerShell(["-Mode", "scan"]);
@@ -130,6 +121,34 @@ ipcMain.handle("apply-tweaks", async (_, { tweakIds, platforms }) => {
     const args = ["-Mode", "apply", "-TweakIds", tweakIds.join(",")];
     if (platforms?.length) args.push("-Platforms", platforms.join(","));
     const data = await runPowerShell(args);
+    mainWindow?.webContents.send("ps-event", { type: "apply_complete" });
+    return { success: true, data };
+  } catch (err) {
+    return { success: false, error: err.message };
+  }
+});
+
+ipcMain.handle("get-startup-apps", async () => {
+  try {
+    const data = await runPowerShell(["-Mode", "startup"]);
+    return { success: true, data };
+  } catch (err) {
+    return { success: false, error: err.message };
+  }
+});
+
+ipcMain.handle("get-thermals", async () => {
+  try {
+    const data = await runPowerShell(["-Mode", "thermal"]);
+    return { success: true, data };
+  } catch (err) {
+    return { success: false, error: err.message };
+  }
+});
+
+ipcMain.handle("run-ping", async () => {
+  try {
+    const data = await runPowerShell(["-Mode", "ping"]);
     return { success: true, data };
   } catch (err) {
     return { success: false, error: err.message };
@@ -137,7 +156,7 @@ ipcMain.handle("apply-tweaks", async (_, { tweakIds, platforms }) => {
 });
 
 ipcMain.handle("save-profile", async (_, profile) => {
-  const dir = path.join(os.homedir(), "Documents", "WinForge", "profiles");
+  const dir = path.join(os.homedir(), "Documents", "VapersOpti", "profiles");
   fs.mkdirSync(dir, { recursive: true });
   const filePath = path.join(dir, `${profile.name || "default"}.json`);
   fs.writeFileSync(filePath, JSON.stringify(profile, null, 2));
@@ -145,7 +164,7 @@ ipcMain.handle("save-profile", async (_, profile) => {
 });
 
 ipcMain.handle("load-profiles", async () => {
-  const dir = path.join(os.homedir(), "Documents", "WinForge", "profiles");
+  const dir = path.join(os.homedir(), "Documents", "VapersOpti", "profiles");
   if (!fs.existsSync(dir)) return { success: true, profiles: [] };
   const profiles = fs.readdirSync(dir)
     .filter(f => f.endsWith(".json"))
@@ -159,10 +178,11 @@ ipcMain.on("window-minimize", () => mainWindow?.minimize());
 ipcMain.on("window-maximize", () => mainWindow?.isMaximized() ? mainWindow.unmaximize() : mainWindow?.maximize());
 ipcMain.on("window-close", () => mainWindow?.hide());
 ipcMain.on("window-quit", () => app.exit(0));
-ipcMain.on("open-report-folder", () => shell.openPath(path.join(os.homedir(), "Documents", "WinForge")));
+ipcMain.on("open-report-folder", () => shell.openPath(path.join(os.homedir(), "Documents", "VapersOpti")));
 ipcMain.on("cancel-operation", () => { if (psProcess && !psProcess.killed) { psProcess.kill(); psProcess = null; } });
 
-// App lifecycle
+// ── APP LIFECYCLE ──────────────────────────────────────────────────────────
+
 const gotLock = app.requestSingleInstanceLock();
 if (!gotLock) {
   app.quit();

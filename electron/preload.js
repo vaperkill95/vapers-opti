@@ -3,6 +3,9 @@ const { contextBridge, ipcRenderer } = require("electron");
 contextBridge.exposeInMainWorld("winforge", {
   scanSystem: () => ipcRenderer.invoke("scan-system"),
   applyTweaks: (tweakIds, platforms) => ipcRenderer.invoke("apply-tweaks", { tweakIds, platforms }),
+  getStartupApps: () => ipcRenderer.invoke("get-startup-apps"),
+  getThermals: () => ipcRenderer.invoke("get-thermals"),
+  runPing: () => ipcRenderer.invoke("run-ping"),
   saveProfile: (profile) => ipcRenderer.invoke("save-profile", profile),
   loadProfiles: () => ipcRenderer.invoke("load-profiles"),
   getVersion: () => ipcRenderer.invoke("get-version"),

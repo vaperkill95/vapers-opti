@@ -137,17 +137,6 @@ const PRESET_TWEAKS = {
 
 const RISK_COLORS = { safe: G, recommended: Y, aggressive: R };
 
-const MOCK_STARTUP = [
-  { name: "Discord", impact: "High", ram: "180MB", delay: "4.2s" },
-  { name: "Spotify", impact: "High", ram: "220MB", delay: "3.8s" },
-  { name: "Steam", impact: "Medium", ram: "140MB", delay: "2.1s" },
-  { name: "NVIDIA Share", impact: "Medium", ram: "90MB", delay: "1.4s" },
-  { name: "OneDrive", impact: "Medium", ram: "75MB", delay: "1.2s" },
-  { name: "Epic Games Launcher", impact: "High", ram: "210MB", delay: "3.5s" },
-  { name: "Battle.net", impact: "High", ram: "160MB", delay: "2.9s" },
-  { name: "Teams", impact: "High", ram: "280MB", delay: "5.1s" },
-];
-
 function TweakRow({ tweak, selected, onToggle }) {
   const rc = RISK_COLORS[tweak.risk];
   return (
@@ -235,7 +224,6 @@ function AIPanel({ onClose }) {
 }
 
 export default function App() {
-  // ── ALL STATE - declared once, no duplicates ──
   const [page, setPage] = useState("splash");
   const [realScan, setRealScan] = useState(null);
   const [tab, setTab] = useState("tweaks");
@@ -250,24 +238,25 @@ export default function App() {
   const [applyProgress, setApplyProgress] = useState(0);
   const [ocGuide, setOcGuide] = useState(null);
   const [disabledStartup, setDisabledStartup] = useState(new Set());
+  const [realStartup, setRealStartup] = useState(null);
+  const [thermalData, setThermalData] = useState(null);
+  const [pingData, setPingData] = useState(null);
+  const [pingLoading, setPingLoading] = useState(false);
+  const [thermalLoading, setThermalLoading] = useState(false);
+  const [startupLoading, setStartupLoading] = useState(false);
 
   const inElectron = typeof window !== "undefined" && !!window.winforge;
 
-  // ── SCAN PAGE EFFECT ──
+  // Scan effect
   useEffect(() => {
     if (page !== "scan") return;
     setScanStep(0);
-
-    // Fire real PowerShell scan if in Electron
     if (inElectron) {
       const unsub = window.winforge.onEvent(e => {
         if (e.type === "scan_result") setRealScan(e);
       });
       window.winforge.scanSystem();
-      // Note: we don't return unsub here because we want scan data to persist
     }
-
-    // Animate the scan lines regardless
     const t1 = setTimeout(() => setScanStep(1), 500);
     const t2 = setTimeout(() => setScanStep(2), 1000);
     const t3 = setTimeout(() => setScanStep(3), 1500);
@@ -279,11 +268,31 @@ export default function App() {
     return () => [t1,t2,t3,t4,t5,t6,t7,t8].forEach(clearTimeout);
   }, [page]);
 
-  // ── APPLY EFFECT ──
+  // Apply effect
   useEffect(() => {
     if (page !== "applying") return;
     const list = Array.from(selectedTweaks);
     let i = 0;
+
+    if (inElectron) {
+      const unsub = window.winforge.onEvent(e => {
+        if (e.type === "progress" && e.step === "apply") {
+          setApplyProgress(e.percent);
+        }
+        if (e.type === "tweak_result") {
+          const tw = ALL_TWEAKS.find(t => t.id === e.result.id);
+          setApplyLog(p => [...p, `${e.result.success ? "✓" : "✗"}  ${tw?.title || e.result.id}`]);
+        }
+        if (e.type === "apply_complete") {
+          unsub();
+          setTimeout(() => setPage("done"), 500);
+        }
+      });
+      window.winforge.applyTweaks(list);
+      return () => unsub();
+    }
+
+    // Browser demo
     const iv = setInterval(() => {
       if (i >= list.length) { clearInterval(iv); setTimeout(() => setPage("done"), 500); return; }
       const tw = ALL_TWEAKS.find(t => t.id === list[i]);
@@ -293,6 +302,43 @@ export default function App() {
     }, 380);
     return () => clearInterval(iv);
   }, [page]);
+
+  // Load startup apps when tab opens
+  useEffect(() => {
+    if (tab !== "startup" || realStartup || !inElectron || startupLoading) return;
+    setStartupLoading(true);
+    window.winforge.getStartupApps().then(res => {
+      if (res.success) {
+        const result = res.data.find(d => d.type === "startup_apps");
+        if (result) setRealStartup(result.apps);
+      }
+      setStartupLoading(false);
+    });
+  }, [tab]);
+
+  // Load thermals when tab opens
+  useEffect(() => {
+    if (tab !== "thermal" || !inElectron || thermalLoading) return;
+    setThermalLoading(true);
+    window.winforge.getThermals().then(res => {
+      if (res.success) {
+        const result = res.data.find(d => d.type === "thermal_data");
+        if (result) setThermalData(result);
+      }
+      setThermalLoading(false);
+    });
+  }, [tab]);
+
+  const runPing = async () => {
+    if (!inElectron) return;
+    setPingLoading(true);
+    const res = await window.winforge.runPing();
+    if (res.success) {
+      const result = res.data.find(d => d.type === "ping_results");
+      if (result) setPingData(result.results);
+    }
+    setPingLoading(false);
+  };
 
   const toggleTweak = id => setSelectedTweaks(p => { const n = new Set(p); n.has(id) ? n.delete(id) : n.add(id); return n; });
   const selectSafe = () => setSelectedTweaks(new Set(ALL_TWEAKS.filter(t => t.risk === "safe").map(t => t.id)));
@@ -310,9 +356,8 @@ export default function App() {
   const score = realScan?.score || 72;
   const projected = Math.min(99, Math.round(score + selectedTweaks.size * 1.1));
   const rebootNeeded = ALL_TWEAKS.filter(t => selectedTweaks.has(t.id) && t.reboot).length;
-
-  // Use real scan data if available, otherwise show placeholders
   const sd = realScan;
+
   const scanLabels = [
     ["CPU Architecture & Cores", sd ? `${sd.cpu.name} · ${sd.cpu.cores}C/${sd.cpu.threads}T` : "Detecting..."],
     ["GPU & Driver Version", sd ? `${sd.gpu.name} · ${sd.gpu.vramMB}MB VRAM` : "Detecting..."],
@@ -324,7 +369,18 @@ export default function App() {
     ["Performance Issues Found", sd ? `${sd.issues.filter(i => i.severity === "high").length} critical · ${sd.issues.filter(i => i.severity === "medium").length} medium` : "Detecting..."],
   ];
 
-  // ── SPLASH ──
+  const startupApps = realStartup || [
+    { name: "Discord", impact: "High", ram: "~180MB", delay: "~4.2s" },
+    { name: "Spotify", impact: "High", ram: "~220MB", delay: "~3.8s" },
+    { name: "Steam", impact: "Medium", ram: "~140MB", delay: "~2.1s" },
+    { name: "Epic Games Launcher", impact: "High", ram: "~210MB", delay: "~3.5s" },
+    { name: "Battle.net", impact: "High", ram: "~160MB", delay: "~2.9s" },
+    { name: "OneDrive", impact: "Medium", ram: "~75MB", delay: "~1.2s" },
+    { name: "NVIDIA Share", impact: "Medium", ram: "~90MB", delay: "~1.4s" },
+    { name: "Teams", impact: "High", ram: "~280MB", delay: "~5.1s" },
+  ];
+
+  // SPLASH
   if (page === "splash") return (
     <div style={{ minHeight: "100vh", background: "#020202", display: "flex", flexDirection: "column", alignItems: "center", justifyContent: "center", fontFamily: mono, position: "relative", overflow: "hidden" }}>
       <link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;600;700;800&family=Bebas+Neue&display=swap" rel="stylesheet" />
@@ -355,7 +411,7 @@ export default function App() {
     </div>
   );
 
-  // ── SCAN ──
+  // SCAN
   if (page === "scan") return (
     <div style={{ minHeight: "100vh", background: "#020202", display: "flex", flexDirection: "column", alignItems: "center", justifyContent: "center", fontFamily: mono, padding: 40 }}>
       <link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;600;700;800&family=Bebas+Neue&display=swap" rel="stylesheet" />
@@ -382,8 +438,8 @@ export default function App() {
               <div style={{ display: "flex", flexDirection: "column", gap: 8 }}>
                 {sd ? (
                   <>
-                    <div style={{ fontSize: 11, color: R }}>⚠ {sd.issues.filter(i => i.severity === "high").length} critical issues found</div>
-                    <div style={{ fontSize: 11, color: Y }}>⚠ {sd.issues.filter(i => i.severity === "medium").length} medium issues found</div>
+                    <div style={{ fontSize: 11, color: R }}>⚠ {sd.issues.filter(i => i.severity === "high").length} critical issues</div>
+                    <div style={{ fontSize: 11, color: Y }}>⚠ {sd.issues.filter(i => i.severity === "medium").length} medium issues</div>
                     <div style={{ fontSize: 11, color: G }}>✓ {sd.cpu.name}</div>
                     <div style={{ fontSize: 11, color: G }}>✓ {sd.gpu.name}</div>
                   </>
@@ -406,7 +462,7 @@ export default function App() {
     </div>
   );
 
-  // ── PROFILE ──
+  // PROFILE
   if (page === "profile") return (
     <div style={{ minHeight: "100vh", background: "#020202", fontFamily: mono, padding: "52px 40px" }}>
       <link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;600;700;800&family=Bebas+Neue&display=swap" rel="stylesheet" />
@@ -468,7 +524,7 @@ export default function App() {
     </div>
   );
 
-  // ── DASHBOARD ──
+  // DASHBOARD
   if (page === "dashboard") return (
     <div style={{ minHeight: "100vh", background: "#020202", fontFamily: mono }}>
       <link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;600;700;800&family=Bebas+Neue&display=swap" rel="stylesheet" />
@@ -500,13 +556,10 @@ export default function App() {
         </div>
       )}
 
-      {/* Header */}
       <div style={{ position: "sticky", top: 0, zIndex: 10, background: "#020202", borderBottom: "1px solid #0a0a0a", padding: "14px 24px", display: "flex", alignItems: "center", gap: 16 }}>
         <div>
           <div style={{ fontFamily: bebas, fontSize: 24, color: "#fff", letterSpacing: 4 }}>VAPERS <span style={{ color: G }}>OPTI</span></div>
-          <div style={{ fontSize: 8, color: "#333", letterSpacing: 2 }}>
-            {sd ? `${sd.cpu.name} · ${sd.gpu.name} · ${sd.ram.totalGB}GB RAM` : "AMD Ryzen 7 5800X3D · RTX 3080 · 32GB RAM"}
-          </div>
+          <div style={{ fontSize: 8, color: "#333", letterSpacing: 2 }}>{sd ? `${sd.cpu.name} · ${sd.gpu.name} · ${sd.ram.totalGB}GB RAM` : "Scan your system to detect hardware"}</div>
         </div>
         <div style={{ marginLeft: "auto", display: "flex", alignItems: "center", gap: 14 }}>
           <div style={{ textAlign: "right" }}>
@@ -526,15 +579,13 @@ export default function App() {
         </div>
       </div>
 
-      {/* Tabs */}
       <div style={{ display: "flex", borderBottom: "1px solid #0a0a0a", padding: "0 24px", overflowX: "auto" }}>
-        {[["tweaks","⚡ Tweaks"],["benchmark","📊 Benchmark"],["overclock","🔥 Overclock Guide"],["drivers","🔧 Drivers"],["startup","🚀 Startup"],["thermal","🌡️ Thermals"],["presets","⚙️ Presets"]].map(([id, label]) => (
+        {[["tweaks","⚡ Tweaks"],["benchmark","📊 Benchmark"],["overclock","🔥 Overclock"],["drivers","🔧 Drivers"],["startup","🚀 Startup"],["thermal","🌡️ Thermals"],["presets","⚙️ Presets"]].map(([id, label]) => (
           <button key={id} onClick={() => setTab(id)} style={{ background: "transparent", border: "none", borderBottom: `2px solid ${tab === id ? G : "transparent"}`, color: tab === id ? G : "#555", fontFamily: mono, fontSize: 10, letterSpacing: 1, padding: "14px 16px", cursor: "pointer", transition: "all 0.15s", whiteSpace: "nowrap" }}>{label}</button>
         ))}
       </div>
 
       <div style={{ padding: "22px 24px", maxWidth: 1060, margin: "0 auto" }}>
-        {/* Score bar */}
         <div style={{ background: "#060606", border: "1px solid #0e0e0e", borderRadius: 10, padding: "14px 20px", marginBottom: 18, display: "flex", alignItems: "center", gap: 16 }}>
           <div><div style={{ fontSize: 8, color: "#555", letterSpacing: 2 }}>BEFORE</div><div style={{ fontFamily: bebas, fontSize: 38, color: Y, lineHeight: 1 }}>{score}</div></div>
           <div style={{ flex: 1 }}>
@@ -549,7 +600,6 @@ export default function App() {
           {rebootNeeded > 0 && <div style={{ marginLeft: 8, fontSize: 9, color: Y }}>⚠ {rebootNeeded} need reboot</div>}
         </div>
 
-        {/* TWEAKS TAB */}
         {tab === "tweaks" && (
           <div>
             <div style={{ display: "flex", gap: 8, marginBottom: 14, alignItems: "center", flexWrap: "wrap" }}>
@@ -573,12 +623,11 @@ export default function App() {
           </div>
         )}
 
-        {/* BENCHMARK TAB */}
         {tab === "benchmark" && (
           <div>
             <div style={{ fontFamily: bebas, fontSize: 30, color: "#fff", letterSpacing: 6, marginBottom: 20 }}>BEFORE / AFTER BENCHMARK</div>
             <div style={{ display: "grid", gridTemplateColumns: "repeat(3,1fr)", gap: 12, marginBottom: 18 }}>
-              {[{ label: "CPU Score", before: "8,420", after: "11,240", color: G, icon: "🔲" },{ label: "Network Ping", before: "28ms", after: "14ms", color: B, icon: "🌐" },{ label: "Boot Time", before: "24s", after: "11s", color: Y, icon: "⚡" }].map(b => (
+              {[{ label: "CPU Score", before: "8,420", after: "11,240", color: G, icon: "🔲" },{ label: "Boot Time", before: "24s", after: "11s", color: Y, icon: "⚡" },{ label: "RAM Usage", before: "68%", after: "52%", color: B, icon: "💾" }].map(b => (
                 <div key={b.label} style={{ background: "#060606", border: "1px solid #0e0e0e", borderRadius: 10, padding: "18px 20px" }}>
                   <div style={{ fontSize: 20, marginBottom: 10 }}>{b.icon}</div>
                   <div style={{ fontSize: 9, color: "#555", letterSpacing: 2, marginBottom: 10 }}>{b.label}</div>
@@ -590,11 +639,39 @@ export default function App() {
                 </div>
               ))}
             </div>
-            <button style={{ background: G, color: "#000", border: "none", fontFamily: mono, fontWeight: 800, fontSize: 11, letterSpacing: 3, padding: "13px 28px", cursor: "pointer", borderRadius: 4, textTransform: "uppercase" }}>▶ Run Full Benchmark</button>
+
+            {/* Real ping test */}
+            <div style={{ background: "#060606", border: "1px solid #0e0e0e", borderRadius: 10, padding: "18px 20px", marginBottom: 16 }}>
+              <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 14 }}>
+                <div style={{ fontSize: 9, color: G, letterSpacing: 2 }}>GAME SERVER PING TEST</div>
+                <button onClick={runPing} disabled={pingLoading || !inElectron}
+                  style={{ background: pingLoading ? "#111" : `${G}15`, color: pingLoading ? "#444" : G, border: `1px solid ${G}33`, fontFamily: mono, fontSize: 9, padding: "6px 14px", cursor: pingLoading ? "default" : "pointer", borderRadius: 4, fontWeight: 700 }}>
+                  {pingLoading ? "Testing..." : "▶ Run Ping Test"}
+                </button>
+              </div>
+              {pingData ? (
+                <div style={{ display: "grid", gridTemplateColumns: "repeat(5,1fr)", gap: 10 }}>
+                  {pingData.map(s => (
+                    <div key={s.name} style={{ textAlign: "center" }}>
+                      <div style={{ fontSize: 9, color: "#444", marginBottom: 6 }}>{s.name}</div>
+                      <div style={{ fontFamily: bebas, fontSize: 28, color: s.ping < 30 ? G : s.ping < 60 ? Y : R }}>{s.ping === 999 ? "N/A" : `${s.ping}ms`}</div>
+                    </div>
+                  ))}
+                </div>
+              ) : (
+                <div style={{ display: "grid", gridTemplateColumns: "repeat(5,1fr)", gap: 10 }}>
+                  {["CoD/Warzone","Valorant","Steam","Battle.net","Google DNS"].map(s => (
+                    <div key={s} style={{ textAlign: "center" }}>
+                      <div style={{ fontSize: 9, color: "#444", marginBottom: 6 }}>{s}</div>
+                      <div style={{ fontFamily: bebas, fontSize: 28, color: "#333" }}>--ms</div>
+                    </div>
+                  ))}
+                </div>
+              )}
+            </div>
           </div>
         )}
 
-        {/* OVERCLOCK TAB */}
         {tab === "overclock" && (
           <div>
             <div style={{ fontFamily: bebas, fontSize: 30, color: "#fff", letterSpacing: 6, marginBottom: 4 }}>OVERCLOCK GUIDE</div>
@@ -614,16 +691,15 @@ export default function App() {
           </div>
         )}
 
-        {/* DRIVERS TAB */}
         {tab === "drivers" && (
           <div>
             <div style={{ fontFamily: bebas, fontSize: 30, color: "#fff", letterSpacing: 6, marginBottom: 20 }}>DRIVER CHECKER</div>
             <div style={{ display: "flex", flexDirection: "column", gap: 10 }}>
               {[
-                { name: "GPU Driver (NVIDIA)", status: "UPDATE AVAILABLE", sc: R, desc: `${sd?.gpu?.driver || "551.61"} installed. Newer driver available with game optimizations.`, url: "nvidia.com/drivers" },
-                { name: "Chipset Driver (AMD)", status: "UP TO DATE", sc: G, desc: "AMD Chipset current. Controls CPU-to-motherboard PCIe communication.", url: "amd.com/drivers" },
-                { name: "Network Driver", status: "UPDATE AVAILABLE", sc: Y, desc: "Newer NIC driver reduces ping spikes and improves packet consistency.", url: "intel.com/network" },
-                { name: "Audio Driver (Realtek)", status: "UP TO DATE", sc: G, desc: "Realtek HD Audio current. Generic Windows driver would add audio latency.", url: "realtek.com" },
+                { name: "GPU Driver (NVIDIA)", status: "UPDATE AVAILABLE", sc: R, desc: sd?.gpu?.driver ? `Driver ${sd.gpu.driver} installed. Check for newer version with game optimizations.` : "Check nvidia.com for latest Game Ready driver.", url: "nvidia.com/drivers" },
+                { name: "Chipset Driver (AMD)", status: "UP TO DATE", sc: G, desc: "AMD Chipset controls CPU-to-motherboard PCIe communication. Keep updated for best performance.", url: "amd.com/drivers" },
+                { name: "Network Driver", status: "UPDATE AVAILABLE", sc: Y, desc: "Newer NIC drivers reduce ping spikes and improve packet consistency for online gaming.", url: "intel.com/network" },
+                { name: "Audio Driver (Realtek)", status: "UP TO DATE", sc: G, desc: "Realtek HD Audio current. Generic Windows driver would add latency.", url: "realtek.com" },
               ].map((d, i) => (
                 <div key={i} style={{ background: "#060606", border: "1px solid #0e0e0e", borderRadius: 10, padding: "16px 18px" }}>
                   <div style={{ display: "flex", justifyContent: "space-between", marginBottom: 5 }}>
@@ -638,24 +714,27 @@ export default function App() {
           </div>
         )}
 
-        {/* STARTUP TAB */}
         {tab === "startup" && (
           <div>
             <div style={{ fontFamily: bebas, fontSize: 30, color: "#fff", letterSpacing: 6, marginBottom: 8 }}>STARTUP ANALYZER</div>
-            <div style={{ fontSize: 10, color: R, marginBottom: 18 }}>⚠ Total RAM wasted at boot: ~1,355MB · Total delay: ~24.2s</div>
+            {startupLoading && <div style={{ fontSize: 10, color: G, marginBottom: 12 }}>⟳ Scanning startup entries...</div>}
+            {realStartup && <div style={{ fontSize: 10, color: G, marginBottom: 12 }}>✓ {realStartup.length} real startup entries detected from your system</div>}
+            <div style={{ fontSize: 10, color: R, marginBottom: 18 }}>⚠ {startupApps.length} startup apps detected · Slowing boot and wasting RAM</div>
             <div style={{ display: "flex", flexDirection: "column", gap: 8 }}>
-              {MOCK_STARTUP.map(app => {
+              {startupApps.map((app, idx) => {
                 const dis = disabledStartup.has(app.name);
+                const impact = app.impact || "Medium";
                 return (
-                  <div key={app.name} style={{ background: "#060606", border: "1px solid #0e0e0e", borderRadius: 10, padding: "14px 16px", display: "flex", alignItems: "center", gap: 14, opacity: dis ? 0.45 : 1, transition: "opacity 0.2s" }}>
+                  <div key={app.name + idx} style={{ background: "#060606", border: "1px solid #0e0e0e", borderRadius: 10, padding: "14px 16px", display: "flex", alignItems: "center", gap: 14, opacity: dis ? 0.45 : 1, transition: "opacity 0.2s" }}>
                     <div style={{ flex: 1 }}>
                       <div style={{ display: "flex", justifyContent: "space-between", marginBottom: 5 }}>
                         <span style={{ fontSize: 12, color: dis ? "#555" : "#e0e0e0", fontWeight: 600, textDecoration: dis ? "line-through" : "none" }}>{app.name}</span>
-                        <span style={{ fontFamily: mono, fontSize: 8, color: app.impact === "High" ? R : Y, border: `1px solid ${app.impact === "High" ? R : Y}33`, borderRadius: 3, padding: "2px 6px", fontWeight: 700 }}>{app.impact.toUpperCase()}</span>
+                        <span style={{ fontFamily: mono, fontSize: 8, color: impact === "High" ? R : Y, border: `1px solid ${impact === "High" ? R : Y}33`, borderRadius: 3, padding: "2px 6px", fontWeight: 700 }}>{impact.toUpperCase()}</span>
                       </div>
                       <div style={{ display: "flex", gap: 20 }}>
                         <span style={{ fontSize: 10, color: "#555" }}>RAM: <span style={{ color: "#888" }}>{app.ram}</span></span>
                         <span style={{ fontSize: 10, color: "#555" }}>Delay: <span style={{ color: "#888" }}>{app.delay}</span></span>
+                        {app.source && <span style={{ fontSize: 9, color: "#333" }}>{app.source}</span>}
                       </div>
                     </div>
                     <button onClick={() => setDisabledStartup(p => { const n = new Set(p); dis ? n.delete(app.name) : n.add(app.name); return n; })}
@@ -666,18 +745,32 @@ export default function App() {
                 );
               })}
             </div>
-            {disabledStartup.size > 0 && <div style={{ marginTop: 14, padding: "12px 16px", background: `${G}0a`, border: `1px solid ${G}22`, borderRadius: 8, fontSize: 10, color: G }}>✓ {disabledStartup.size} disabled · Boot time saved: ~{(disabledStartup.size * 2.8).toFixed(1)}s · RAM freed: ~{disabledStartup.size * 180}MB</div>}
+            {disabledStartup.size > 0 && <div style={{ marginTop: 14, padding: "12px 16px", background: `${G}0a`, border: `1px solid ${G}22`, borderRadius: 8, fontSize: 10, color: G }}>✓ {disabledStartup.size} disabled · Boot time saved: ~{(disabledStartup.size * 2.8).toFixed(1)}s · RAM freed: ~{disabledStartup.size * 150}MB</div>}
           </div>
         )}
 
-        {/* THERMAL TAB */}
         {tab === "thermal" && (
           <div>
             <div style={{ fontFamily: bebas, fontSize: 30, color: "#fff", letterSpacing: 6, marginBottom: 20 }}>THERMAL MONITOR</div>
+            {thermalLoading && <div style={{ fontSize: 10, color: G, marginBottom: 16 }}>⟳ Reading sensor data...</div>}
             <div style={{ display: "grid", gridTemplateColumns: "repeat(2,1fr)", gap: 12, marginBottom: 18 }}>
               {[
-                { label: "CPU Temperature", value: "52°C", percent: 58, color: G, status: "NORMAL", detail: `${sd?.cpu?.name || "Ryzen 7 5800X3D"} · Max 90°C` },
-                { label: "GPU Temperature", value: "44°C", percent: 53, color: B, status: "COOL", detail: `${sd?.gpu?.name || "RTX 3080"} · Max 83°C` }
+                {
+                  label: "CPU Temperature",
+                  value: thermalData?.cpuTemp > 0 ? `${thermalData.cpuTemp}°C` : "52°C",
+                  percent: thermalData?.cpuTemp > 0 ? Math.round((thermalData.cpuTemp / 90) * 100) : 58,
+                  color: thermalData?.cpuTemp > 80 ? R : thermalData?.cpuTemp > 65 ? Y : G,
+                  status: thermalData?.cpuTemp > 80 ? "HOT" : thermalData?.cpuTemp > 65 ? "WARM" : "NORMAL",
+                  detail: `${sd?.cpu?.name || "CPU"} · Max 90°C · Load: ${thermalData?.cpuLoad || 0}%`
+                },
+                {
+                  label: "GPU Temperature",
+                  value: thermalData?.gpuTemp > 0 ? `${thermalData.gpuTemp}°C` : "44°C",
+                  percent: thermalData?.gpuTemp > 0 ? Math.round((thermalData.gpuTemp / 83) * 100) : 53,
+                  color: thermalData?.gpuTemp > 75 ? R : thermalData?.gpuTemp > 60 ? Y : B,
+                  status: thermalData?.gpuTemp > 75 ? "HOT" : thermalData?.gpuTemp > 60 ? "WARM" : "COOL",
+                  detail: `${sd?.gpu?.name || "GPU"} · Max 83°C`
+                }
               ].map(t => (
                 <div key={t.label} style={{ background: "#060606", border: "1px solid #0e0e0e", borderRadius: 10, padding: "18px 20px" }}>
                   <div style={{ display: "flex", justifyContent: "space-between", marginBottom: 12 }}>
@@ -686,19 +779,37 @@ export default function App() {
                   </div>
                   <div style={{ fontFamily: bebas, fontSize: 52, color: t.color, lineHeight: 1, marginBottom: 10 }}>{t.value}</div>
                   <div style={{ height: 4, background: "#0e0e0e", borderRadius: 2, overflow: "hidden", marginBottom: 8 }}>
-                    <div style={{ height: "100%", width: `${t.percent}%`, background: `linear-gradient(90deg,${t.color}55,${t.color})` }} />
+                    <div style={{ height: "100%", width: `${t.percent}%`, background: `linear-gradient(90deg,${t.color}55,${t.color})`, transition: "width 1s ease" }} />
                   </div>
                   <div style={{ fontSize: 9, color: "#444" }}>{t.detail}</div>
                 </div>
               ))}
             </div>
+
+            {thermalData && (
+              <div style={{ background: "#060606", border: "1px solid #0e0e0e", borderRadius: 10, padding: "16px 20px", marginBottom: 16, display: "grid", gridTemplateColumns: "repeat(3,1fr)", gap: 16 }}>
+                <div style={{ textAlign: "center" }}>
+                  <div style={{ fontSize: 9, color: "#444", marginBottom: 6 }}>CPU LOAD</div>
+                  <div style={{ fontFamily: bebas, fontSize: 32, color: thermalData.cpuLoad > 80 ? R : G }}>{thermalData.cpuLoad}%</div>
+                </div>
+                <div style={{ textAlign: "center" }}>
+                  <div style={{ fontSize: 9, color: "#444", marginBottom: 6 }}>RAM USED</div>
+                  <div style={{ fontFamily: bebas, fontSize: 32, color: Y }}>{thermalData.ramUsed}GB</div>
+                </div>
+                <div style={{ textAlign: "center" }}>
+                  <div style={{ fontSize: 9, color: "#444", marginBottom: 6 }}>RAM TOTAL</div>
+                  <div style={{ fontFamily: bebas, fontSize: 32, color: "#555" }}>{thermalData.ramTotal}GB</div>
+                </div>
+              </div>
+            )}
+
             <div style={{ background: "#060606", border: "1px solid #0e0e0e", borderRadius: 10, padding: "18px 20px" }}>
               <div style={{ fontSize: 9, color: Y, letterSpacing: 2, marginBottom: 14 }}>COOLING RECOMMENDATIONS</div>
               {[
-                { icon: "✅", tip: "CPU temps are healthy. Current cooling is adequate for stock operation." },
-                { icon: "💡", tip: "For overclocking the 5800X3D keep temps under 80C. The 3D V-Cache is heat sensitive - use a good AIO." },
-                { icon: "🔧", tip: "If your PC is 2+ years old, consider reapplying thermal paste. Dried paste adds 10-20C." },
-                { icon: "🌡️", tip: "Keep case ambient under 35C. Add case fans - front intake, rear/top exhaust." }
+                { icon: "✅", tip: "Temps are healthy. Current cooling is adequate for stock operation." },
+                { icon: "💡", tip: `For overclocking the ${sd?.cpu?.name?.includes("5800X3D") ? "5800X3D, the 3D V-Cache is heat sensitive - keep under 75C. Use a high-end AIO." : "CPU, keep temps under 80C under full load. An AIO 240mm+ is recommended."}` },
+                { icon: "🔧", tip: "If your PC is 2+ years old, reapply thermal paste. Dried paste adds 10-20C to temps." },
+                { icon: "🌡️", tip: "Keep case ambient under 35C. Use front intake and rear/top exhaust fan layout." }
               ].map((r, i) => (
                 <div key={i} style={{ display: "flex", gap: 12, padding: "10px 14px", background: "#0a0a0a", borderRadius: 8, border: "1px solid #111", marginBottom: 8 }}>
                   <span style={{ fontSize: 16 }}>{r.icon}</span>
@@ -709,7 +820,6 @@ export default function App() {
           </div>
         )}
 
-        {/* PRESETS TAB */}
         {tab === "presets" && (
           <div>
             <div style={{ fontFamily: bebas, fontSize: 30, color: "#fff", letterSpacing: 6, marginBottom: 4 }}>COMMUNITY PRESETS</div>
@@ -746,7 +856,7 @@ export default function App() {
     </div>
   );
 
-  // ── APPLYING ──
+  // APPLYING
   if (page === "applying") return (
     <div style={{ minHeight: "100vh", background: "#020202", display: "flex", flexDirection: "column", alignItems: "center", justifyContent: "center", fontFamily: mono, padding: 40 }}>
       <link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;600;700;800&family=Bebas+Neue&display=swap" rel="stylesheet" />
@@ -768,7 +878,7 @@ export default function App() {
     </div>
   );
 
-  // ── DONE ──
+  // DONE
   if (page === "done") return (
     <div style={{ minHeight: "100vh", background: "#020202", display: "flex", flexDirection: "column", alignItems: "center", justifyContent: "center", fontFamily: mono, padding: 40, textAlign: "center" }}>
       <link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;600;700;800&family=Bebas+Neue&display=swap" rel="stylesheet" />
@@ -794,7 +904,7 @@ export default function App() {
       <div style={{ display: "flex", gap: 10 }}>
         <button style={{ background: G, color: "#000", border: "none", fontFamily: mono, fontWeight: 800, fontSize: 11, letterSpacing: 2, padding: "13px 28px", cursor: "pointer", borderRadius: 4, textTransform: "uppercase" }}>🔄 Restart Now</button>
         <button onClick={() => setPage("dashboard")} style={{ background: "transparent", color: "#666", border: "1px solid #111", fontFamily: mono, fontSize: 11, letterSpacing: 2, padding: "13px 24px", cursor: "pointer", borderRadius: 4, textTransform: "uppercase" }}>Back to Dashboard</button>
-        <button onClick={() => { setPage("splash"); setSelectedTweaks(new Set()); setApplyLog([]); setApplyProgress(0); setScanStep(0); setProfile({ mode: null, games: [], platforms: [], competitive: false }); }}
+        <button onClick={() => { setPage("splash"); setSelectedTweaks(new Set()); setApplyLog([]); setApplyProgress(0); setScanStep(0); setProfile({ mode: null, games: [], platforms: [], competitive: false }); setRealScan(null); setRealStartup(null); setThermalData(null); setPingData(null); }}
           style={{ background: "transparent", color: "#444", border: "1px solid #0a0a0a", fontFamily: mono, fontSize: 11, letterSpacing: 2, padding: "13px 24px", cursor: "pointer", borderRadius: 4, textTransform: "uppercase" }}>Start Over</button>
       </div>
     </div>
