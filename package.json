@@ -1,13 +1,13 @@
 {
   "name": "vapers-opti",
-  "version": "1.0.0",
+  "version": "1.4.0",
   "description": "Vapers Opti — Intelligent Windows Performance Optimization Suite",
   "author": "Vapers Opti",
   "main": "electron/main.js",
   "scripts": {
     "dev": "concurrently \"npm run dev:vite\" \"npm run dev:electron\"",
     "dev:vite": "vite",
-    "dev:electron": "wait-on http://localhost:5173 && cross-env NODE_ENV=development electron .",
+    "dev:electron": "wait-on http://localhost:5173 --timeout 60000 --interval 1000 && set NODE_ENV=development && npx electron .",
     "build": "vite build && electron-builder",
     "build:win": "vite build && electron-builder --win",
     "build:dir": "vite build && electron-builder --dir",
@@ -63,6 +63,11 @@
     },
     "portable": {
       "artifactName": "VapersOpti-Portable-${version}.exe"
+    },
+    "publish": {
+      "provider": "github",
+      "owner": "vaperkill95",
+      "repo": "vapers-opti"
     }
   }
 }

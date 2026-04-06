@@ -1,27 +1,14 @@
-const { app, BrowserWindow, ipcMain, shell, Menu, Tray, nativeImage } = require("electron");
+const { app, BrowserWindow, ipcMain, shell, Menu, Tray, nativeImage, dialog } = require("electron");
+const { autoUpdater } = require("electron-updater");
 const path = require("path");
 const { spawn } = require("child_process");
 const fs = require("fs");
 const os = require("os");
 
-const isDev = process.env.NODE_ENV === "development";
+const isDev = process.env.NODE_ENV === "development" || !app.isPackaged;
 let mainWindow = null;
 let tray = null;
 let psProcess = null;
-
-function checkAdmin() {
-  try {
-    require("child_process").execSync("net session", { stdio: "ignore" });
-  } catch {
-    try {
-      require("child_process").execSync(
-        `powershell -Command "Start-Process '${process.execPath}' -Verb RunAs"`,
-        { stdio: "ignore" }
-      );
-    } catch {}
-    app.quit();
-  }
-}
 
 function createWindow() {
   mainWindow = new BrowserWindow({
@@ -41,6 +28,7 @@ function createWindow() {
 
   if (isDev) {
     mainWindow.loadURL("http://localhost:5173");
+    mainWindow.webContents.openDevTools({ mode: "detach" });
   } else {
     mainWindow.loadFile(path.join(__dirname, "../dist/index.html"));
   }
@@ -92,10 +80,12 @@ function runPowerShell(args = []) {
     });
 
     ps.stderr.on("data", (data) => {
+      console.error("PS STDERR:", data.toString());
       mainWindow?.webContents.send("ps-error", data.toString());
     });
 
     ps.on("close", (code) => {
+      console.log("PS closed code:", code, "results:", results.length);
       if (code === 0 || results.length > 0) resolve(results);
       else reject(new Error(`PowerShell exited with code ${code}`));
     });
@@ -105,15 +95,10 @@ function runPowerShell(args = []) {
   });
 }
 
-// ── IPC HANDLERS ──────────────────────────────────────────────────────────
-
+// IPC HANDLERS
 ipcMain.handle("scan-system", async () => {
-  try {
-    const data = await runPowerShell(["-Mode", "scan"]);
-    return { success: true, data };
-  } catch (err) {
-    return { success: false, error: err.message };
-  }
+  try { return { success: true, data: await runPowerShell(["-Mode", "scan"]) }; }
+  catch (err) { return { success: false, error: err.message }; }
 });
 
 ipcMain.handle("apply-tweaks", async (_, { tweakIds, platforms }) => {
@@ -123,54 +108,53 @@ ipcMain.handle("apply-tweaks", async (_, { tweakIds, platforms }) => {
     const data = await runPowerShell(args);
     mainWindow?.webContents.send("ps-event", { type: "apply_complete" });
     return { success: true, data };
-  } catch (err) {
-    return { success: false, error: err.message };
-  }
+  } catch (err) { return { success: false, error: err.message }; }
 });
 
 ipcMain.handle("get-startup-apps", async () => {
-  try {
-    const data = await runPowerShell(["-Mode", "startup"]);
-    return { success: true, data };
-  } catch (err) {
-    return { success: false, error: err.message };
-  }
+  try { return { success: true, data: await runPowerShell(["-Mode", "startup"]) }; }
+  catch (err) { return { success: false, error: err.message }; }
 });
 
 ipcMain.handle("get-thermals", async () => {
-  try {
-    const data = await runPowerShell(["-Mode", "thermal"]);
-    return { success: true, data };
-  } catch (err) {
-    return { success: false, error: err.message };
-  }
+  try { return { success: true, data: await runPowerShell(["-Mode", "thermal"]) }; }
+  catch (err) { return { success: false, error: err.message }; }
 });
 
 ipcMain.handle("run-ping", async () => {
-  try {
-    const data = await runPowerShell(["-Mode", "ping"]);
-    return { success: true, data };
-  } catch (err) {
-    return { success: false, error: err.message };
-  }
+  try { return { success: true, data: await runPowerShell(["-Mode", "ping"]) }; }
+  catch (err) { return { success: false, error: err.message }; }
+});
+
+ipcMain.handle("get-installed-games", async () => {
+  try { return { success: true, data: await runPowerShell(["-Mode", "games"]) }; }
+  catch (err) { return { success: false, error: err.message }; }
 });
 
 ipcMain.handle("save-profile", async (_, profile) => {
-  const dir = path.join(os.homedir(), "Documents", "VapersOpti", "profiles");
-  fs.mkdirSync(dir, { recursive: true });
-  const filePath = path.join(dir, `${profile.name || "default"}.json`);
-  fs.writeFileSync(filePath, JSON.stringify(profile, null, 2));
-  return { success: true, path: filePath };
+  try {
+    const result = await dialog.showSaveDialog(mainWindow, {
+      title: "Export Vapers Opti Profile",
+      defaultPath: `VapersOpti-${profile.name || "MyProfile"}.json`,
+      filters: [{ name: "Vapers Opti Profile", extensions: ["json"] }]
+    });
+    if (result.canceled) return { success: false, canceled: true };
+    fs.writeFileSync(result.filePath, JSON.stringify(profile, null, 2));
+    return { success: true, path: result.filePath };
+  } catch (err) { return { success: false, error: err.message }; }
 });
 
 ipcMain.handle("load-profiles", async () => {
-  const dir = path.join(os.homedir(), "Documents", "VapersOpti", "profiles");
-  if (!fs.existsSync(dir)) return { success: true, profiles: [] };
-  const profiles = fs.readdirSync(dir)
-    .filter(f => f.endsWith(".json"))
-    .map(f => { try { return JSON.parse(fs.readFileSync(path.join(dir, f), "utf8")); } catch { return null; } })
-    .filter(Boolean);
-  return { success: true, profiles };
+  try {
+    const result = await dialog.showOpenDialog(mainWindow, {
+      title: "Import Vapers Opti Profile",
+      filters: [{ name: "Vapers Opti Profile", extensions: ["json"] }],
+      properties: ["openFile"]
+    });
+    if (result.canceled) return { success: false, canceled: true };
+    const data = JSON.parse(fs.readFileSync(result.filePaths[0], "utf8"));
+    return { success: true, profiles: [data] };
+  } catch (err) { return { success: false, error: err.message }; }
 });
 
 ipcMain.handle("get-version", () => app.getVersion());
@@ -181,24 +165,25 @@ ipcMain.on("window-quit", () => app.exit(0));
 ipcMain.on("open-report-folder", () => shell.openPath(path.join(os.homedir(), "Documents", "VapersOpti")));
 ipcMain.on("cancel-operation", () => { if (psProcess && !psProcess.killed) { psProcess.kill(); psProcess = null; } });
 
-// ── APP LIFECYCLE ──────────────────────────────────────────────────────────
-
+// APP LIFECYCLE
 const gotLock = app.requestSingleInstanceLock();
 if (!gotLock) {
   app.quit();
 } else {
   app.on("second-instance", () => {
-    if (mainWindow) { if (mainWindow.isMinimized()) mainWindow.restore(); mainWindow.focus(); }
+    if (mainWindow) { if (mainWindow.isMinimized()) mainWindow.restore(); mainWindow.show(); mainWindow.focus(); }
   });
-
   app.whenReady().then(() => {
-    if (process.platform === "win32") checkAdmin();
     createWindow();
     createTray();
+    setTimeout(() => { try { autoUpdater.checkForUpdatesAndNotify(); } catch(e) {} }, 8000);
   });
 
+  autoUpdater.on("update-available", () => { mainWindow?.webContents.send("ps-event", { type: "update_available" }); });
+  autoUpdater.on("update-downloaded", () => { mainWindow?.webContents.send("ps-event", { type: "update_ready" }); });
   app.on("before-quit", () => {
     if (psProcess && !psProcess.killed) psProcess.kill();
     tray?.destroy();
   });
+  app.on("window-all-closed", () => {});
 }
