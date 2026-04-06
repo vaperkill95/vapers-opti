@@ -1,6 +1,6 @@
 {
   "name": "vapers-opti",
-  "version": "1.4.0",
+  "version": "1.6.0",
   "description": "Vapers Opti — Intelligent Windows Performance Optimization Suite",
   "author": "Vapers Opti",
   "main": "electron/main.js",
@@ -30,44 +30,16 @@
   "build": {
     "appId": "app.vapersopti.optimizer",
     "productName": "Vapers Opti",
-    "directories": {
-      "output": "release",
-      "buildResources": "assets"
-    },
-    "files": [
-      "dist/**/*",
-      "electron/**/*",
-      "assets/**/*"
-    ],
-    "extraResources": [
-      {
-        "from": "scripts/",
-        "to": "scripts/",
-        "filter": ["**/*.ps1"]
-      }
-    ],
+    "directories": { "output": "release", "buildResources": "assets" },
+    "files": ["dist/**/*", "electron/**/*", "assets/**/*"],
+    "extraResources": [{ "from": "scripts/", "to": "scripts/", "filter": ["**/*.ps1"] }],
     "win": {
-      "target": [
-        { "target": "nsis", "arch": ["x64"] },
-        { "target": "portable", "arch": ["x64"] }
-      ],
+      "target": [{ "target": "nsis", "arch": ["x64"] }, { "target": "portable", "arch": ["x64"] }],
       "requestedExecutionLevel": "requireAdministrator",
       "artifactName": "VapersOpti-Setup-${version}.${ext}"
     },
-    "nsis": {
-      "oneClick": false,
-      "allowToChangeInstallationDirectory": true,
-      "createDesktopShortcut": true,
-      "createStartMenuShortcut": true,
-      "shortcutName": "Vapers Opti"
-    },
-    "portable": {
-      "artifactName": "VapersOpti-Portable-${version}.exe"
-    },
-    "publish": {
-      "provider": "github",
-      "owner": "vaperkill95",
-      "repo": "vapers-opti"
-    }
+    "nsis": { "oneClick": false, "allowToChangeInstallationDirectory": true, "createDesktopShortcut": true, "createStartMenuShortcut": true, "shortcutName": "Vapers Opti" },
+    "portable": { "artifactName": "VapersOpti-Portable-${version}.exe" },
+    "publish": { "provider": "github", "owner": "vaperkill95", "repo": "vapers-opti" }
   }
 }

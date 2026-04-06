@@ -37,64 +37,70 @@ const ALL_TWEAKS = [
   // CPU
   { id: "cpu_power", category: "CPU", risk: "safe", title: "Ultimate Performance Power Plan", desc: "Activates hidden Ultimate Performance plan. Eliminates CPU throttling and idle states entirely.", impact: 95, reboot: false },
   { id: "cpu_parking", category: "CPU", risk: "safe", title: "Disable CPU Core Parking", desc: "Keeps all CPU cores hot. Prevents micro-stutters from parked cores waking up mid-game.", impact: 78, reboot: false },
-  { id: "cpu_scheduler", category: "CPU", risk: "safe", title: "Foreground App CPU Priority", desc: "Gives active game more CPU slices per second over background processes.", impact: 65, reboot: false },
+  { id: "cpu_scheduler", category: "CPU", risk: "safe", title: "Foreground App Priority — Low Latency Mode", desc: "Sets Win32PrioritySeparation to 26 — proven lowest latency setting for esports. Short intervals, variable length, maximum foreground boost.", impact: 72, reboot: false },
   { id: "cpu_hpet", category: "CPU", risk: "recommended", title: "Disable HPET Timer", desc: "Forces Windows to use TSC timer — lower overhead, better frame time consistency.", impact: 68, reboot: true },
-  { id: "cpu_timer", category: "CPU", risk: "recommended", title: "Enhanced TSC Sync Policy", desc: "Improved CPU clock synchronization for better frame pacing.", impact: 72, reboot: true },
-  { id: "cpu_affinity", category: "CPU", risk: "safe", title: "Global Timer Resolution Requests", desc: "Allows games to request higher timer resolution for smoother frame delivery.", impact: 60, reboot: false },
-  { id: "cpu_interrupt", category: "CPU", risk: "recommended", title: "IRQ Priority Optimization", desc: "Raises interrupt request priority for faster CPU-to-device communication.", impact: 55, reboot: false },
-  { id: "sys_power_throttling", category: "CPU", risk: "recommended", title: "Disable Power Throttling", desc: "Prevents Windows from throttling any process. Full CPU power for all foreground apps.", impact: 74, reboot: false },
-  { id: "sys_process_priority", category: "CPU", risk: "safe", title: "System Responsiveness to Gaming", desc: "Sets multimedia system profile to prioritize games over background processes.", impact: 70, reboot: false },
-  { id: "cpu_spectre", category: "CPU", risk: "aggressive", title: "Disable Spectre/Meltdown Patches", desc: "Recovers 5-15% CPU performance. RISK: Only for dedicated gaming PCs.", impact: 88, reboot: true },
+  { id: "cpu_timer", category: "CPU", risk: "recommended", title: "Enhanced TSC Sync Policy", desc: "Sets TSC sync to enhanced for improved CPU clock synchronization across cores.", impact: 65, reboot: true },
+  { id: "cpu_affinity", category: "CPU", risk: "safe", title: "Global Timer Resolution Requests", desc: "Allows games to request sub-millisecond timer resolution for smoother frame delivery.", impact: 60, reboot: false },
+  { id: "sys_power_throttling", category: "CPU", risk: "recommended", title: "Disable Power Throttling", desc: "Prevents Windows from throttling any process. Full CPU power available to all foreground apps at all times.", impact: 74, reboot: false },
+  { id: "sys_process_priority", category: "CPU", risk: "safe", title: "Full MMCSS Gaming Profile", desc: "Sets all MMCSS gaming values including SFIO Rate 4, GPU Priority 8, Clock Rate 10000. The complete profile pros use.", impact: 78, reboot: false },
+  { id: "cpu_spectre", category: "CPU", risk: "aggressive", title: "Disable Spectre/Meltdown Patches", desc: "Recovers 5-15% CPU performance. RISK: Security patches disabled. Only for dedicated gaming PCs.", impact: 88, reboot: true },
   // GPU
-  { id: "gpu_msi", category: "GPU", risk: "safe", title: "Enable MSI Mode for GPU", desc: "Reduces GPU-to-CPU interrupt latency by up to 30%. One of the highest-impact GPU tweaks.", impact: 88, reboot: true },
-  { id: "gpu_hags", category: "GPU", risk: "safe", title: "Hardware-Accelerated GPU Scheduling", desc: "Offloads GPU memory management from CPU. Reduces frame latency on RTX 2000+ / RX 5000+.", impact: 76, reboot: true },
+  { id: "gpu_msi", category: "GPU", risk: "safe", title: "Enable MSI Mode for GPU", desc: "Reduces GPU-to-CPU interrupt latency by up to 30%. One of the highest-impact GPU tweaks available.", impact: 88, reboot: true },
+  { id: "gpu_hags", category: "GPU", risk: "safe", title: "Hardware-Accelerated GPU Scheduling", desc: "Offloads GPU memory management from CPU. Reduces frame latency on RTX 2000+ and RX 5000+.", impact: 76, reboot: true },
+  { id: "gpu_mpo", category: "GPU", risk: "recommended", title: "Disable Multiplane Overlay (MPO)", desc: "MPO causes GPU driver crashes, stutters and input lag spikes in Windows 11. Widely confirmed fix by NVIDIA and AMD. Biggest impact on Unreal Engine games like Fortnite and CoD.", impact: 82, reboot: true },
   { id: "gpu_tdr", category: "GPU", risk: "safe", title: "Increase GPU TDR Delay", desc: "Prevents false GPU timeout resets during shader compilation. Stops mid-game crashes.", impact: 55, reboot: true },
   { id: "gpu_nvidia_power", category: "GPU", risk: "safe", title: "NVIDIA Max Performance Mode", desc: "Prevents GPU downclocking at scene transitions. Stable frame times throughout gameplay.", impact: 82, reboot: false },
-  { id: "gpu_nvidia_lld", category: "GPU", risk: "recommended", title: "NVIDIA Low Latency Mode", desc: "Reduces input lag by minimizing GPU render queue depth.", impact: 85, reboot: false },
-  { id: "gpu_shader_cache", category: "GPU", risk: "safe", title: "Maximize Shader Cache", desc: "Compiled shaders persist longer. Eliminates repeat stutter across sessions.", impact: 77, reboot: false },
+  { id: "gpu_nvidia_lld", category: "GPU", risk: "recommended", title: "NVIDIA Low Latency Mode", desc: "Reduces GPU render queue depth. Cuts input lag by 1-4 frames in most games.", impact: 80, reboot: false },
+  { id: "gpu_shader_cache", category: "GPU", risk: "safe", title: "Maximize Shader Cache", desc: "Compiled shaders persist longer. Eliminates repeat stutter from shader recompilation.", impact: 77, reboot: false },
   { id: "gpu_preemption", category: "GPU", risk: "recommended", title: "Disable GPU Preemption", desc: "GPU completes render tasks uninterrupted. No Windows mid-frame interruptions.", impact: 70, reboot: true },
+  { id: "gpu_rebar", category: "GPU", risk: "safe", title: "Verify Resizable BAR (ReBAR / SAM) Active", desc: "ReBAR lets CPU access full GPU VRAM at once instead of 256MB chunks — free 5-15% FPS on RTX 3000+ and RX 6000+. Must be enabled in BIOS under 'Above 4G Decoding'. Check Diagnostics tab for status.", impact: 82, reboot: false },
   // Network
-  { id: "net_nagle", category: "Network", risk: "safe", title: "Disable Nagle's Algorithm", desc: "Stops TCP packet batching. Eliminates 20-200ms of artificial input packet delay.", impact: 85, reboot: false },
-  { id: "net_throttle", category: "Network", risk: "safe", title: "Remove Network Throttle Index", desc: "Windows caps network at 20% during multimedia. Removes this cap for games.", impact: 72, reboot: false },
-  { id: "net_dns", category: "Network", risk: "safe", title: "Switch to Cloudflare 1.1.1.1 DNS", desc: "Fastest gaming DNS. Reduces DNS lookup time from 30-50ms to under 5ms.", impact: 68, reboot: false },
-  { id: "net_mtu", category: "Network", risk: "safe", title: "Optimize MTU Size", desc: "Sets optimal packet size to prevent fragmentation. Reduces packet loss.", impact: 55, reboot: false },
-  { id: "net_autotuning", category: "Network", risk: "recommended", title: "Disable TCP Auto-Tuning", desc: "Prevents Windows from auto-adjusting TCP window size which causes lag spikes.", impact: 65, reboot: false },
-  { id: "net_qos", category: "Network", risk: "safe", title: "Remove QoS Bandwidth Reserve", desc: "Windows reserves 20% of bandwidth for system. Removes this limit entirely.", impact: 75, reboot: false },
-  { id: "net_rss", category: "Network", risk: "safe", title: "Enable Receive Side Scaling", desc: "Distributes network traffic across CPU cores. Reduces NIC bottleneck.", impact: 60, reboot: false },
-  { id: "net_interrupt", category: "Network", risk: "recommended", title: "Disable NIC Interrupt Moderation", desc: "Immediate packet processing. Max network responsiveness for wired ethernet.", impact: 70, reboot: false },
+  { id: "net_nagle", category: "Network", risk: "safe", title: "Disable Nagle's Algorithm", desc: "Stops TCP packet batching. Eliminates 20-200ms of artificial packet delay in competitive games.", impact: 85, reboot: false },
+  { id: "net_throttle", category: "Network", risk: "safe", title: "Remove Network Throttle Index", desc: "Windows caps network at 20% during multimedia. Removes this hidden cap for full bandwidth.", impact: 72, reboot: false },
+  { id: "net_dns", category: "Network", risk: "safe", title: "Switch to Cloudflare 1.1.1.1 DNS", desc: "Fastest gaming DNS server. Reduces DNS lookup time from 30-50ms to under 5ms. Flushes DNS cache.", impact: 68, reboot: false },
+  { id: "net_mtu", category: "Network", risk: "safe", title: "Optimize MTU Size (1500)", desc: "Sets optimal packet size to prevent fragmentation and packet loss in online games.", impact: 55, reboot: false },
+  { id: "net_autotuning", category: "Network", risk: "recommended", title: "Disable TCP Auto-Tuning", desc: "Prevents Windows from auto-adjusting TCP window size which causes periodic lag spikes.", impact: 65, reboot: false },
+  { id: "net_qos", category: "Network", risk: "safe", title: "Remove QoS Bandwidth Reserve", desc: "Windows silently reserves 20% of your bandwidth for system use. This removes that limit.", impact: 75, reboot: false },
+  { id: "net_rss", category: "Network", risk: "safe", title: "Enable Receive Side Scaling", desc: "Distributes network traffic across multiple CPU cores. Reduces NIC bottleneck during online play.", impact: 60, reboot: false },
+  { id: "net_interrupt", category: "Network", risk: "recommended", title: "Disable NIC Interrupt Moderation", desc: "Immediate packet processing instead of batching. Maximum network responsiveness for ethernet.", impact: 70, reboot: false },
+  { id: "net_ipv6", category: "Network", risk: "safe", title: "Disable IPv6 (DPC Latency Fix)", desc: "IPv6 is a top cause of ndis.sys DPC latency spikes that cause stutters in competitive games. Disabling it forces IPv4-only for lower, more consistent ping.", impact: 65, reboot: true },
+  { id: "dpc_dynamictick", category: "CPU", risk: "recommended", title: "Disable Dynamic Tick (DPC Latency)", desc: "bcdedit /set disabledynamictick yes — prevents Windows from pausing the system timer during idle. Reduces DPC latency spikes that cause audio pops and game micro-stutters.", impact: 70, reboot: true },
   // Memory
-  { id: "mem_xmp", category: "Memory", risk: "safe", title: "Verify XMP/EXPO Active", desc: "Detects if RAM is running below rated speed. XMP off = up to 40% less memory bandwidth.", impact: 90, reboot: false },
+  { id: "mem_xmp", category: "Memory", risk: "safe", title: "Verify XMP/EXPO Active", desc: "Checks if RAM is running below rated speed. XMP off can mean 40% less memory bandwidth.", impact: 90, reboot: false },
   { id: "mem_pagefile", category: "Memory", risk: "recommended", title: "Fixed Pagefile Size", desc: "Prevents pagefile from dynamically resizing which causes disk I/O spikes mid-game.", impact: 62, reboot: true },
   { id: "mem_standby", category: "Memory", risk: "safe", title: "Clear Memory Standby List", desc: "Releases RAM held in standby. Maximizes free memory available to your game.", impact: 55, reboot: false },
   // Storage
-  { id: "stor_prefetch", category: "Storage", risk: "safe", title: "Disable Prefetch (SSD Only)", desc: "Prefetch was designed for HDDs. On NVMe it wastes RAM and CPU.", impact: 74, reboot: false },
-  { id: "stor_ntfs", category: "Storage", risk: "safe", title: "Optimize NTFS Settings", desc: "Disables last-access timestamps. Reduces disk I/O on every file read.", impact: 60, reboot: false },
-  { id: "stor_index", category: "Storage", risk: "safe", title: "Disable Indexing on Game Drives", desc: "Stops Windows Search from indexing game folders. Eliminates random I/O spikes.", impact: 58, reboot: false },
-  { id: "stor_write_cache", category: "Storage", risk: "safe", title: "Optimize Write Cache Policy", desc: "Buffers writes in RAM first. Speeds up shader compilation and save operations.", impact: 66, reboot: false },
-  { id: "clean_junk", category: "Storage", risk: "safe", title: "Clean Junk Files & Shader Cache", desc: "Removes temp files, Windows Update cache, NVIDIA/AMD shader cache. Frees disk space.", impact: 45, reboot: false },
+  { id: "stor_prefetch", category: "Storage", risk: "safe", title: "Disable Prefetch (SSD Only)", desc: "Prefetch was designed for HDDs. On NVMe it wastes RAM and CPU since loads are already instant.", impact: 74, reboot: false },
+  { id: "stor_ntfs", category: "Storage", risk: "safe", title: "Optimize NTFS Settings", desc: "Disables last-access timestamps and 8.3 filenames. Reduces disk I/O on every file operation.", impact: 60, reboot: false },
+  { id: "stor_index", category: "Storage", risk: "safe", title: "Disable Drive Indexing", desc: "Stops Windows Search from indexing all drives. Eliminates random I/O spikes during gameplay.", impact: 58, reboot: false },
+  { id: "stor_write_cache", category: "Storage", risk: "safe", title: "Enable Write Cache Optimization", desc: "Buffers writes in RAM first. Speeds up shader compilation and game save operations.", impact: 66, reboot: false },
+  { id: "clean_junk", category: "Storage", risk: "safe", title: "Clean Junk Files & Shader Cache", desc: "Removes temp files, Windows Update cache, NVIDIA DX/GL cache, D3D cache. Frees disk space and can fix stutter.", impact: 45, reboot: false },
   // Display
-  { id: "disp_fso", category: "Display", risk: "safe", title: "Disable Fullscreen Optimizations", desc: "Forces true exclusive fullscreen. Windows secretly uses borderless windowed adding input lag.", impact: 72, reboot: false },
-  { id: "disp_vrr", category: "Display", risk: "safe", title: "Enable Variable Refresh Rate", desc: "Ensures FreeSync/G-Sync VRR is active. Eliminates tearing without V-Sync latency penalty.", impact: 80, reboot: false },
-  { id: "disp_refresh", category: "Display", risk: "safe", title: "Verify Max Refresh Rate Active", desc: "Windows sometimes defaults to 60Hz even on 144/240Hz monitors. Detects and flags this.", impact: 95, reboot: false },
+  { id: "disp_fso", category: "Display", risk: "safe", title: "Disable Fullscreen Optimizations", desc: "Forces true exclusive fullscreen. Windows secretly uses borderless windowed in FSO mode adding input lag.", impact: 72, reboot: false },
+  { id: "disp_vrr", category: "Display", risk: "safe", title: "Enable Variable Refresh Rate", desc: "Ensures FreeSync/G-Sync VRR is active. Eliminates tearing without V-Sync input lag penalty.", impact: 80, reboot: false },
+  { id: "disp_refresh", category: "Display", risk: "safe", title: "Verify Max Refresh Rate Active", desc: "Windows sometimes defaults to 60Hz on 144/240Hz monitors. Check and fix immediately.", impact: 95, reboot: false },
   // Input
-  { id: "input_accel", category: "Input", risk: "safe", title: "Disable Mouse Acceleration", desc: "1:1 physical-to-digital movement. Acceleration destroys muscle memory for aiming.", impact: 90, reboot: false },
-  { id: "input_raw", category: "Input", risk: "safe", title: "Raw Mouse Input Optimization", desc: "Ensures mouse sensitivity is normalized for raw input compatibility.", impact: 60, reboot: false },
-  { id: "input_usb", category: "Input", risk: "aggressive", title: "USB Polling Rate Override (1000Hz)", desc: "Mouse inputs registered 8x faster than Windows default 125Hz polling.", impact: 78, reboot: true },
+  { id: "input_accel", category: "Input", risk: "safe", title: "Disable Mouse Acceleration", desc: "1:1 physical-to-digital mouse movement. Acceleration destroys muscle memory for aiming consistency.", impact: 90, reboot: false },
+  { id: "input_raw", category: "Input", risk: "safe", title: "Raw Mouse Input Optimization", desc: "Normalizes mouse sensitivity for raw input compatibility across games.", impact: 60, reboot: false },
+  { id: "input_usb", category: "Input", risk: "aggressive", title: "USB Polling Rate Override (1000Hz)", desc: "Mouse inputs registered 8x faster than Windows default 125Hz. Configure in mouse software.", impact: 78, reboot: true },
   // Audio
   { id: "audio_exclusive", category: "Audio", risk: "safe", title: "Enable Audio Exclusive Mode", desc: "Game takes full control of audio device. Cuts audio latency from ~30ms to under 10ms.", impact: 60, reboot: false },
   { id: "audio_sample", category: "Audio", risk: "safe", title: "Set Optimal Sample Rate (48kHz)", desc: "Games output at 48kHz. Matching Windows format eliminates real-time resampling overhead.", impact: 45, reboot: false },
   // System
-  { id: "sys_gamebar", category: "System", risk: "safe", title: "Disable Xbox Game Bar & DVR", desc: "Removes constant process monitoring and background recording overhead.", impact: 71, reboot: false },
+  { id: "sys_gamebar", category: "System", risk: "safe", title: "Disable Xbox Game Bar & DVR", desc: "Removes constant process monitoring and background recording overhead completely.", impact: 71, reboot: false },
   { id: "sys_telemetry", category: "System", risk: "safe", title: "Kill All Telemetry Services", desc: "Disables 14 Microsoft background reporters consuming CPU and disk I/O 24/7.", impact: 55, reboot: false },
-  { id: "sys_services", category: "System", risk: "recommended", title: "Disable Unnecessary Services", desc: "Fax, Xbox services, Remote Registry, Search indexer — all useless on a gaming PC.", impact: 65, reboot: true },
-  { id: "sys_defender", category: "System", risk: "recommended", title: "Defender Exclusions for Games", desc: "Stops AV scanning game folders during loading. Eliminates load time penalty.", impact: 78, reboot: false },
-  { id: "sys_mmcss", category: "System", risk: "safe", title: "Configure MMCSS for Gaming", desc: "Game audio threads get higher priority. Prevents audio dropouts during heavy combat.", impact: 60, reboot: false },
-  { id: "sys_visual", category: "System", risk: "safe", title: "Minimize Visual Effects", desc: "Removes animations, shadows, transparency. Frees GPU/CPU from desktop rendering.", impact: 45, reboot: false },
-  { id: "sys_timer", category: "System", risk: "recommended", title: "Optimize Boot Timer Configuration", desc: "Sets TSC sync to enhanced mode for more precise system timing.", impact: 58, reboot: true },
+  { id: "sys_services", category: "System", risk: "recommended", title: "Disable Unnecessary Services", desc: "Fax, Xbox services, Remote Registry, Windows Search — all useless on a dedicated gaming PC.", impact: 65, reboot: true },
+  { id: "sys_defender", category: "System", risk: "recommended", title: "Defender Exclusions for Games", desc: "Stops AV scanning game folders during loading. Eliminates the load time and stutter penalty.", impact: 78, reboot: false },
+  { id: "sys_mmcss", category: "System", risk: "safe", title: "Configure MMCSS for Gaming", desc: "Game audio and process threads get higher priority. Prevents stutters during heavy combat.", impact: 60, reboot: false },
+  { id: "sys_visual", category: "System", risk: "safe", title: "Minimize Visual Effects", desc: "Removes animations, shadows, transparency effects. Frees GPU and CPU from desktop rendering.", impact: 45, reboot: false },
+  { id: "sys_startup_delay", category: "System", risk: "safe", title: "Remove Windows Startup Delay", desc: "Windows adds an artificial 10-second delay before loading startup apps. This removes it entirely.", impact: 40, reboot: false },
+  { id: "sys_vbs", category: "System", risk: "aggressive", title: "Disable VBS/HVCI (5-15% FPS Gain)", desc: "Virtualization Based Security costs 5-15% FPS in Windows 11 by default. Disabling recovers all of it. RISK: Reduces kernel security. Only for dedicated gaming PCs.", impact: 85, reboot: true },
+  { id: "sys_hyperv", category: "System", risk: "aggressive", title: "Disable Hyper-V Hypervisor", desc: "Hyper-V runs a background hypervisor that adds CPU overhead even when not using VMs. Gains 3-8% performance on gaming PCs.", impact: 72, reboot: true },
+  { id: "sys_timer", category: "System", risk: "recommended", title: "Optimize Boot Timer Configuration", desc: "Sets TSC sync to enhanced mode for more precise system timing and better frame pacing.", impact: 58, reboot: true },
   // Privacy
-  { id: "priv_bloat", category: "Privacy", risk: "safe", title: "Remove Pre-installed Bloatware", desc: "Removes Candy Crush, TikTok, News, People app and other junk apps.", impact: 35, reboot: false },
-  { id: "priv_cortana", category: "Privacy", risk: "safe", title: "Disable Cortana", desc: "Frees 200-400MB RAM and eliminates background search indexing.", impact: 40, reboot: false },
-  { id: "priv_ads", category: "Privacy", risk: "safe", title: "Disable Advertising ID & Telemetry", desc: "Stops Windows ad tracking and reduces background reporting to Microsoft.", impact: 25, reboot: false },
+  { id: "priv_bloat", category: "Privacy", risk: "safe", title: "Remove Pre-installed Bloatware", desc: "Removes Candy Crush, TikTok, News, People app and other junk that runs background processes.", impact: 35, reboot: false },
+  { id: "priv_cortana", category: "Privacy", risk: "safe", title: "Disable Cortana", desc: "Frees 200-400MB RAM and eliminates background search indexing completely.", impact: 40, reboot: false },
+  { id: "priv_ads", category: "Privacy", risk: "safe", title: "Disable Advertising ID & Telemetry", desc: "Stops Windows ad tracking and reduces background reporting to Microsoft servers.", impact: 25, reboot: false },
 ];
 
 const GAME_GUIDES = {
@@ -102,36 +108,33 @@ const GAME_GUIDES = {
     name: "Call of Duty", icon: "🎯", color: G,
     settings: [
       { category: "Display", setting: "Display Mode", value: "Fullscreen Exclusive", reason: "True fullscreen reduces input lag vs borderless windowed" },
-      { category: "Display", setting: "Render Resolution", value: "100", reason: "Never drop below 100% — use DLSS/FSR instead for performance" },
       { category: "Display", setting: "NVIDIA DLSS", value: "Performance or Balanced", reason: "Gains 30-50% FPS with minimal quality loss on RTX cards" },
-      { category: "Display", setting: "Frame Rate Limit", value: "Unlimited or match refresh rate", reason: "Cap at monitor refresh rate + 3 for stable frametimes" },
-      { category: "Graphics", setting: "Texture Resolution", value: "Normal", reason: "High textures waste VRAM needed for stable frametimes" },
-      { category: "Graphics", setting: "Shadow Map Resolution", value: "Low", reason: "Biggest FPS gain. Shadows barely matter for gameplay" },
+      { category: "Display", setting: "Frame Rate Limit", value: "Unlimited or monitor Hz + 3", reason: "Cap slightly above refresh rate for stable frametimes with VRR" },
+      { category: "Graphics", setting: "Shadow Map Resolution", value: "Low", reason: "Biggest single FPS gain. Shadows barely matter for gameplay" },
       { category: "Graphics", setting: "Ambient Occlusion", value: "Disabled", reason: "Expensive effect with zero gameplay benefit" },
-      { category: "Graphics", setting: "Anti-Aliasing", value: "SMAA T2X or DLSS", reason: "TAA blurs moving enemies — use SMAA for cleaner edges" },
-      { category: "Graphics", setting: "Depth of Field", value: "Disabled", reason: "Blurs the screen — never useful in competitive play" },
+      { category: "Graphics", setting: "Anti-Aliasing", value: "SMAA T2X or DLSS", reason: "TAA blurs moving enemies. Use SMAA for cleaner edges" },
       { category: "Graphics", setting: "World Motion Blur", value: "0", reason: "Motion blur reduces clarity when tracking targets" },
       { category: "Graphics", setting: "Weapon Motion Blur", value: "Off", reason: "Weapon blur makes tracking recoil harder" },
-      { category: "Network", setting: "On-Demand Texture Streaming", value: "Disabled", reason: "Streams textures from internet during gameplay — causes stutters" },
+      { category: "Graphics", setting: "Depth of Field", value: "Disabled", reason: "Blurs the screen — never useful in competitive play" },
+      { category: "Network", setting: "On-Demand Texture Streaming", value: "Disabled", reason: "Streams textures from internet during gameplay — causes mid-game stutters" },
+      { category: "Graphics", setting: "Texture Resolution", value: "Normal", reason: "High textures waste VRAM needed for stable frametimes" },
     ]
   },
   valorant: {
     name: "Valorant", icon: "⚡", color: R,
     settings: [
       { category: "Video", setting: "Display Mode", value: "Fullscreen", reason: "Exclusive fullscreen gives lowest input lag" },
-      { category: "Video", setting: "Resolution", value: "Native or 1280x960 stretched", reason: "Stretched gives larger hit boxes on enemies" },
-      { category: "Video", setting: "Frame Rate Limit", value: "Unlocked", reason: "Higher frames = lower latency. Let it run free" },
+      { category: "Video", setting: "Resolution", value: "Native or 1280x960 stretched", reason: "Stretched gives larger character models — easier to hit" },
+      { category: "Video", setting: "Frame Rate Limit", value: "Unlocked", reason: "Higher frames = lower input latency. Let it run free" },
       { category: "Video", setting: "Material Quality", value: "Low", reason: "No gameplay impact. Major FPS gain" },
-      { category: "Video", setting: "Texture Quality", value: "Low", reason: "Enemies look identical at low vs high" },
+      { category: "Video", setting: "Texture Quality", value: "Low", reason: "Enemies look identical at low vs high settings" },
       { category: "Video", setting: "Detail Quality", value: "Low", reason: "Environment detail with zero impact on hit detection" },
-      { category: "Video", setting: "UI Quality", value: "Low", reason: "UI rendering overhead eliminated" },
-      { category: "Video", setting: "Vignette", value: "Off", reason: "Darkens screen edges — reduces visibility" },
       { category: "Video", setting: "VSync", value: "Off", reason: "Adds 1-3 frames of input lag. Never use in competitive" },
-      { category: "Video", setting: "Anti-Aliasing", value: "None or MSAA 2x", reason: "None = maximum FPS. MSAA 2x if edges bother you" },
+      { category: "Video", setting: "Anti-Aliasing", value: "None", reason: "None = maximum FPS and sharpest image for enemy spotting" },
       { category: "Video", setting: "Anisotropic Filtering", value: "2x", reason: "Makes textures clearer at distance with minimal cost" },
-      { category: "Video", setting: "Improve Clarity", value: "On", reason: "Sharpens enemy silhouettes at no FPS cost" },
-      { category: "Video", setting: "Bloom", value: "Off", reason: "Flash effects less disorienting with bloom off" },
-      { category: "Video", setting: "Distortion", value: "Off", reason: "Environmental distortion effects disabled" },
+      { category: "Video", setting: "Improve Clarity", value: "On", reason: "Sharpens enemy silhouettes at zero FPS cost" },
+      { category: "Video", setting: "Bloom", value: "Off", reason: "Flash effects less disorienting without bloom" },
+      { category: "Video", setting: "Distortion", value: "Off", reason: "Environmental distortion effects waste GPU" },
       { category: "Video", setting: "First Person Shadows", value: "Off", reason: "Your own shadow costs FPS with zero benefit" },
     ]
   },
@@ -139,37 +142,17 @@ const GAME_GUIDES = {
     name: "Fortnite", icon: "🏗️", color: B,
     settings: [
       { category: "Video", setting: "Window Mode", value: "Fullscreen", reason: "True fullscreen for minimum input lag" },
-      { category: "Video", setting: "Resolution", value: "Native", reason: "Epic's upscaling (TSR) handles sub-native rendering better" },
-      { category: "Video", setting: "Rendering Mode", value: "Performance (Alpha)", reason: "Performance mode gives massive FPS gains on any GPU" },
+      { category: "Video", setting: "Rendering Mode", value: "Performance (Alpha)", reason: "Performance mode gives massive FPS gains on any GPU — use this" },
       { category: "Video", setting: "3D Resolution", value: "100%", reason: "Lower 3D res adds blur that makes enemies harder to spot" },
-      { category: "Video", setting: "View Distance", value: "Medium", reason: "Higher view distance costs FPS with no combat benefit" },
       { category: "Video", setting: "Shadows", value: "Off", reason: "Biggest single FPS gain in Fortnite" },
-      { category: "Video", setting: "Anti-Aliasing & Super Resolution", value: "TSR Medium or Epic", reason: "TSR provides best quality at reduced render resolution" },
-      { category: "Video", setting: "Textures", value: "Low", reason: "High textures waste VRAM on a GPU needed for frames" },
-      { category: "Video", setting: "Effects", value: "Low", reason: "Explosion and build effects reduced. Cleaner gameplay" },
+      { category: "Video", setting: "View Distance", value: "Medium", reason: "Higher view distance costs FPS with no combat benefit" },
+      { category: "Video", setting: "Anti-Aliasing & Super Resolution", value: "TSR Medium", reason: "TSR provides best quality at reduced render resolution" },
+      { category: "Video", setting: "Textures", value: "Low", reason: "High textures waste VRAM on frames" },
+      { category: "Video", setting: "Effects", value: "Low", reason: "Explosion and build effects reduced for cleaner gameplay" },
       { category: "Video", setting: "Post Processing", value: "Low", reason: "Eliminates film grain, bloom, lens flare overhead" },
       { category: "Video", setting: "VSync", value: "Off", reason: "Adds input lag. Use G-Sync/FreeSync instead" },
       { category: "Video", setting: "Motion Blur", value: "Off", reason: "Blurs during builds and fights — deadly in competitive" },
       { category: "Video", setting: "Frame Rate Limit", value: "Unlimited", reason: "Let your GPU push max frames for lowest latency" },
-    ]
-  },
-  apex: {
-    name: "Apex Legends", icon: "🔶", color: "#ff6b35",
-    settings: [
-      { category: "Video", setting: "Display Mode", value: "Full Screen", reason: "Exclusive fullscreen for minimum input lag" },
-      { category: "Video", setting: "Resolution", value: "Native", reason: "Apex's TAA at lower res looks terrible — stay native" },
-      { category: "Video", setting: "Aspect Ratio", value: "16:9 Native", reason: "Stretched res worsens hit detection in Apex" },
-      { category: "Video", setting: "V-Sync", value: "Disabled", reason: "Always off in competitive — use FreeSync/G-Sync" },
-      { category: "Video", setting: "NVIDIA Reflex", value: "Enabled + Boost", reason: "Cuts input lag by 30-40ms. Must-enable on NVIDIA" },
-      { category: "Video", setting: "Adaptive Resolution FPS Target", value: "0 (Disabled)", reason: "Prevents dynamic resolution changes mid-fight" },
-      { category: "Video", setting: "Anti-Aliasing", value: "None or TSAA", reason: "None for max FPS. TSAA if targeting >240FPS" },
-      { category: "Video", setting: "Texture Streaming Budget", value: "None (use all VRAM)", reason: "Prevents texture pop-in during fights" },
-      { category: "Video", setting: "Texture Filtering", value: "Bilinear", reason: "Lower filtering = higher FPS with minimal visual loss" },
-      { category: "Video", setting: "Ambient Occlusion Quality", value: "Disabled", reason: "Major FPS drain with zero competitive benefit" },
-      { category: "Video", setting: "Sun Shadow Coverage", value: "Low", reason: "Shadow quality reduction for significant FPS gain" },
-      { category: "Video", setting: "Spot Shadow Detail", value: "Disabled", reason: "Dynamic spot shadows eliminated" },
-      { category: "Video", setting: "Volumetric Lighting", value: "Disabled", reason: "God rays and fog effects removed" },
-      { category: "Video", setting: "Dynamic Spot Shadows", value: "Disabled", reason: "Most expensive shadow type — never needed" },
     ]
   },
   cs2: {
@@ -177,17 +160,15 @@ const GAME_GUIDES = {
     settings: [
       { category: "Video", setting: "Display Mode", value: "Fullscreen", reason: "Exclusive fullscreen is mandatory for competitive CS2" },
       { category: "Video", setting: "Resolution", value: "1280x960 or 1024x768 stretched", reason: "Pro standard. Larger character models are easier to hit" },
-      { category: "Video", setting: "Refresh Rate", value: "Maximum", reason: "Always run max refresh rate your monitor supports" },
-      { category: "Video", setting: "Boost Player Contrast", value: "Enabled", reason: "Makes enemies stand out from backgrounds more clearly" },
+      { category: "Video", setting: "Boost Player Contrast", value: "Enabled", reason: "Makes enemies stand out from backgrounds much more clearly" },
       { category: "Video", setting: "Wait for Vertical Sync", value: "Disabled", reason: "VSync adds frame delay — always off in CS2" },
       { category: "Video", setting: "Multisampling Anti-Aliasing Mode", value: "None", reason: "No AA = maximum FPS and sharpest image" },
       { category: "Video", setting: "Global Shadow Quality", value: "Very Low", reason: "Lowest shadows = highest FPS. No gameplay impact" },
       { category: "Video", setting: "Model/Texture Detail", value: "Low", reason: "Enemy models identical at low vs high detail" },
-      { category: "Video", setting: "Shader Detail", value: "Low", reason: "Surface shading quality with no gameplay relevance" },
-      { category: "Video", setting: "Particle Detail", value: "Low", reason: "Smoke and explosion particle effects reduced" },
-      { category: "Video", setting: "Ambient Occlusion", value: "Disabled", reason: "Expensive effect with zero impact on gameplay" },
-      { category: "Video", setting: "High Dynamic Range", value: "Quality or Performance", reason: "HDR improves visibility in dark areas" },
-      { category: "Video", setting: "FidelityFX Super Resolution", value: "Disabled", reason: "Native resolution is always sharper in CS2" },
+      { category: "Video", setting: "Shader Detail", value: "Low", reason: "Surface shading with no gameplay relevance" },
+      { category: "Video", setting: "Particle Detail", value: "Low", reason: "Smoke and explosion particles reduced" },
+      { category: "Video", setting: "Ambient Occlusion", value: "Disabled", reason: "Expensive effect with zero competitive impact" },
+      { category: "Video", setting: "High Dynamic Range", value: "Quality", reason: "HDR improves visibility in dark areas of maps" },
     ]
   },
 };
@@ -203,8 +184,8 @@ const OC_GUIDES = {
   ]},
   cpu_intel: { title: "Intel CPU Overclocking", icon: "🔵", color: B, warning: "Only K/KF series Intel CPUs can be overclocked.", steps: [
     { step: 1, title: "Enter BIOS", desc: "Restart and press DEL or F2. Go to AI Tweaker (ASUS) or OC Tweaker (ASRock).", tip: "Board manufacturer determines the BIOS name" },
-    { step: 2, title: "Set CPU Ratio", desc: "Find CPU Core Ratio, set to Sync All Cores. For i9-13900K try 55x (5.5GHz) to start.", tip: "Each 1x step = 100MHz. Do not jump more than 5x at once." },
-    { step: 3, title: "Set Vcore Voltage", desc: "Set to Manual. Start at 1.25V for moderate OC. Max safe daily is 1.35V on 12th/13th gen.", tip: "Never exceed 1.40V - permanent damage risk" },
+    { step: 2, title: "Set CPU Ratio", desc: "Find CPU Core Ratio, set to Sync All Cores. For i9-13900K try 55x to start.", tip: "Each 1x step = 100MHz. Do not jump more than 5x at once." },
+    { step: 3, title: "Set Vcore Voltage", desc: "Set to Manual. Start at 1.25V. Max safe daily is 1.35V on 12th/13th gen.", tip: "Never exceed 1.40V - permanent damage risk" },
     { step: 4, title: "Enable XMP", desc: "Find XMP profile and enable Profile 1. Sets RAM to its rated speed.", tip: "Required - RAM at base speed hurts performance" },
     { step: 5, title: "Set Power Limits", desc: "Set PL1 and PL2 both to 253W. Removes power throttling.", tip: "Requires good cooling - AIO liquid cooler recommended" },
     { step: 6, title: "Stability Test", desc: "Run Prime95 Small FFTs for 10 minutes. If it crashes reduce ratio by 1x or add 0.025V.", tip: "BSODs during testing are normal - adjust and retry" },
@@ -226,29 +207,31 @@ const OC_GUIDES = {
     { step: 6, title: "Save Profile", desc: "Save profile in Radeon Software and enable apply on startup.", tip: "Create separate profiles for gaming vs desktop" },
   ]},
   ram: { title: "RAM Overclocking (XMP + Manual)", icon: "💾", color: Y, warning: "RAM OC is one of the safest and highest-impact overclocks available.", steps: [
-    { step: 1, title: "Enable XMP or EXPO", desc: "In BIOS find XMP, DOCP, or EXPO and enable Profile 1. Runs RAM at advertised speed.", tip: "Without XMP, DDR5-6000 runs at DDR5-4800. You leave 25% speed unused." },
-    { step: 2, title: "Verify in Windows", desc: "Open Task Manager, go to Performance then Memory. Speed shown should match RAM box rating.", tip: "If it shows 2400MHz with fast RAM, XMP is not enabled" },
-    { step: 3, title: "Manual Frequency", desc: "After XMP, try increasing by 200MHz.", tip: "Not all kits can go higher - depends on memory chips used" },
+    { step: 1, title: "Enable XMP or EXPO", desc: "In BIOS find XMP, DOCP, or EXPO and enable Profile 1. Runs RAM at advertised speed.", tip: "Without XMP, DDR5-6000 runs at DDR5-4800. You leave 25% speed on the table." },
+    { step: 2, title: "Verify in Windows", desc: "Open Task Manager, go to Performance then Memory. Speed should match RAM box rating.", tip: "If it shows 2400MHz with fast RAM, XMP is not enabled" },
+    { step: 3, title: "Manual Frequency", desc: "After XMP, try increasing by 200MHz increments.", tip: "Not all kits can go higher - depends on memory chips used" },
     { step: 4, title: "Tighten Timings", desc: "Lower CL timings = faster. If on CL30, try CL28 or CL26 at same frequency.", tip: "May need slightly more VDIMM voltage if unstable" },
-    { step: 5, title: "Test Stability", desc: "Run MemTest86 for one full pass. In Windows run TestMem5 with anta777 profile 2 hours.", tip: "RAM errors cause random crashes - always test changes" },
+    { step: 5, title: "Test Stability", desc: "Run MemTest86 for one full pass. In Windows run TestMem5 with anta777 profile for 2 hours.", tip: "RAM errors cause random crashes - always test changes" },
     { step: 6, title: "Benchmark", desc: "Run Cinebench R23 before and after. Expect 5-15% improvement on AMD Ryzen.", tip: "Ryzen benefits more from fast RAM than Intel due to Infinity Fabric" },
   ]},
 };
 
 const COMMUNITY_PRESETS = [
-  { id: "fps_monster", name: "The FPS Monster", icon: "👾", desc: "Maximum FPS at all costs. Aggressive CPU, GPU and network tweaks. For dedicated gaming rigs only.", tweakCount: 30, color: R, risk: "aggressive" },
-  { id: "competitive", name: "The Competitor", icon: "🏆", desc: "Minimum input lag, maximum consistency. Optimized for Valorant, CS2, CoD.", tweakCount: 25, color: G, risk: "recommended" },
-  { id: "streamer", name: "The Streamer", icon: "📡", desc: "Balanced gaming and encoding. Network QoS for upload. Audio optimized.", tweakCount: 20, color: B, risk: "safe" },
-  { id: "safe_boost", name: "The Safe Boost", icon: "🛡️", desc: "100% safe tweaks only. No risk, significant gain. Perfect for first-time optimizers.", tweakCount: 18, color: Y, risk: "safe" },
+  { id: "nuclear", name: "Nuclear Option", icon: "☢️", desc: "Every single tweak. VBS off, Hyper-V off, Spectre patches off, MPO off, dynamic tick off. Dedicated gaming rig ONLY. No exceptions.", tweakCount: 42, color: R, risk: "aggressive" },
+  { id: "fps_monster", name: "The FPS Monster", icon: "👾", desc: "Maximum FPS at all costs. Aggressive CPU, GPU and network tweaks. Includes MPO, VBS, Hyper-V. For dedicated gaming rigs only.", tweakCount: 34, color: "#ff8800", risk: "aggressive" },
+  { id: "competitive", name: "The Competitor", icon: "🏆", desc: "Minimum input lag, maximum consistency. MPO fix, DPC latency fixes, Cloudflare DNS, full MMCSS. Optimized for Valorant, CS2, CoD.", tweakCount: 28, color: G, risk: "recommended" },
+  { id: "streamer", name: "The Streamer", icon: "📡", desc: "Balanced gaming and encoding. Network QoS, audio optimized, safe tweaks only.", tweakCount: 20, color: B, risk: "safe" },
+  { id: "safe_boost", name: "The Safe Boost", icon: "🛡️", desc: "100% safe tweaks only. No risk, significant gain. Perfect for first-time optimizers.", tweakCount: 20, color: Y, risk: "safe" },
   { id: "developer", name: "The Developer", icon: "💻", desc: "Dev tools, WSL, terminal performance. Removes bloat. Fast compile times.", tweakCount: 14, color: "#aa88ff", risk: "recommended" },
 ];
 
 const PRESET_TWEAKS = {
-  fps_monster: ["cpu_power","cpu_parking","cpu_scheduler","cpu_hpet","cpu_timer","cpu_spectre","sys_power_throttling","sys_process_priority","gpu_msi","gpu_hags","gpu_nvidia_power","gpu_nvidia_lld","gpu_preemption","net_nagle","net_throttle","net_dns","net_autotuning","net_qos","net_interrupt","mem_xmp","stor_prefetch","stor_ntfs","disp_fso","disp_refresh","input_accel","sys_gamebar","sys_telemetry","sys_services","sys_defender","clean_junk"],
-  competitive: ["cpu_power","cpu_parking","cpu_scheduler","cpu_hpet","sys_process_priority","gpu_msi","gpu_hags","gpu_nvidia_power","gpu_nvidia_lld","net_nagle","net_throttle","net_dns","net_autotuning","net_qos","mem_xmp","stor_prefetch","disp_fso","disp_refresh","input_accel","sys_gamebar","sys_telemetry","sys_defender","sys_mmcss","priv_cortana","clean_junk"],
-  streamer: ["cpu_power","cpu_parking","sys_process_priority","gpu_hags","net_nagle","net_throttle","net_dns","net_qos","mem_xmp","stor_prefetch","disp_vrr","input_accel","audio_exclusive","audio_sample","sys_gamebar","sys_telemetry","sys_defender","priv_bloat","priv_ads","clean_junk"],
-  safe_boost: ["cpu_power","cpu_parking","sys_process_priority","gpu_hags","net_nagle","net_throttle","net_dns","mem_xmp","stor_prefetch","stor_ntfs","disp_refresh","input_accel","sys_gamebar","sys_telemetry","sys_defender","sys_mmcss","priv_bloat","clean_junk"],
-  developer: ["cpu_power","cpu_parking","net_nagle","net_throttle","net_dns","mem_xmp","stor_prefetch","stor_ntfs","sys_gamebar","sys_telemetry","sys_visual","priv_bloat","priv_cortana","priv_ads","audio_sample","clean_junk"],
+  nuclear: ["cpu_power","cpu_parking","cpu_scheduler","cpu_hpet","cpu_timer","cpu_spectre","cpu_affinity","sys_power_throttling","sys_process_priority","sys_vbs","sys_hyperv","sys_startup_delay","sys_gamebar","sys_telemetry","sys_services","sys_defender","sys_mmcss","dpc_dynamictick","gpu_msi","gpu_hags","gpu_mpo","gpu_nvidia_power","gpu_nvidia_lld","gpu_preemption","gpu_rebar","net_nagle","net_throttle","net_dns","net_autotuning","net_qos","net_interrupt","net_ipv6","mem_xmp","stor_prefetch","stor_ntfs","stor_index","disp_fso","disp_refresh","input_accel","priv_bloat","priv_cortana","priv_ads","clean_junk"],
+  fps_monster: ["cpu_power","cpu_parking","cpu_scheduler","cpu_hpet","cpu_timer","cpu_spectre","sys_power_throttling","sys_process_priority","sys_vbs","sys_hyperv","sys_startup_delay","dpc_dynamictick","gpu_msi","gpu_hags","gpu_mpo","gpu_nvidia_power","gpu_nvidia_lld","gpu_preemption","net_nagle","net_throttle","net_dns","net_autotuning","net_qos","net_interrupt","net_ipv6","mem_xmp","stor_prefetch","stor_ntfs","disp_fso","disp_refresh","input_accel","sys_gamebar","sys_telemetry","sys_services","sys_defender","clean_junk"],
+  competitive: ["cpu_power","cpu_parking","cpu_scheduler","cpu_hpet","sys_process_priority","sys_power_throttling","sys_startup_delay","dpc_dynamictick","gpu_msi","gpu_hags","gpu_mpo","gpu_nvidia_power","gpu_nvidia_lld","net_nagle","net_throttle","net_dns","net_autotuning","net_qos","net_ipv6","mem_xmp","stor_prefetch","disp_fso","disp_refresh","input_accel","sys_gamebar","sys_telemetry","sys_defender","clean_junk"],
+  streamer: ["cpu_power","cpu_parking","sys_process_priority","gpu_hags","gpu_mpo","net_nagle","net_throttle","net_dns","net_qos","mem_xmp","stor_prefetch","disp_vrr","input_accel","audio_exclusive","audio_sample","sys_gamebar","sys_telemetry","sys_defender","priv_bloat","sys_startup_delay","clean_junk"],
+  safe_boost: ["cpu_power","cpu_parking","sys_process_priority","gpu_hags","gpu_mpo","net_nagle","net_throttle","net_dns","mem_xmp","stor_prefetch","stor_ntfs","disp_refresh","input_accel","sys_gamebar","sys_telemetry","sys_defender","sys_mmcss","sys_startup_delay","priv_bloat","clean_junk"],
+  developer: ["cpu_power","cpu_parking","net_nagle","net_throttle","net_dns","mem_xmp","stor_prefetch","stor_ntfs","sys_gamebar","sys_telemetry","sys_visual","priv_bloat","priv_cortana","priv_ads","sys_startup_delay","clean_junk"],
 };
 
 const RISK_COLORS = { safe: G, recommended: Y, aggressive: R };
@@ -284,13 +267,13 @@ function TweakRow({ tweak, selected, onToggle }) {
 }
 
 function AIPanel({ onClose, scanData }) {
-  const [messages, setMessages] = useState([{ role: "assistant", content: "Vapers Opti AI ready. Ask me anything about optimizing your Windows PC for gaming. I have access to your hardware scan data." }]);
+  const [messages, setMessages] = useState([{ role: "assistant", content: "Vapers Opti AI ready. I know your hardware specs. Ask me anything about optimizing your PC for gaming." }]);
   const [input, setInput] = useState("");
   const [loading, setLoading] = useState(false);
   const endRef = useRef(null);
   useEffect(() => { endRef.current?.scrollIntoView({ behavior: "smooth" }); }, [messages]);
 
-  const hwContext = scanData ? `User hardware: ${scanData.cpu?.name}, ${scanData.gpu?.name}, ${scanData.ram?.totalGB}GB RAM @ ${scanData.ram?.speedMHz}MHz, ${scanData.storage?.isNvme ? "NVMe" : "SATA"} SSD, ${scanData.network?.isEthernet ? "Ethernet" : "WiFi"}, Windows Build ${scanData.windows?.build}.` : "";
+  const hwCtx = scanData ? `User system: ${scanData.cpu?.name}, ${scanData.gpu?.name}, ${scanData.ram?.totalGB}GB @ ${scanData.ram?.speedMHz}MHz, ${scanData.storage?.isNvme ? "NVMe" : "SATA"}, ${scanData.network?.isEthernet ? "Ethernet" : "WiFi"}, Windows Build ${scanData.windows?.build}. VBS: ${scanData.vbsEnabled ? "ENABLED - costing FPS" : "disabled"}. MPO: ${scanData.mpoEnabled ? "ENABLED - may cause stutter" : "disabled"}.` : "";
 
   const send = async () => {
     if (!input.trim() || loading) return;
@@ -301,7 +284,7 @@ function AIPanel({ onClose, scanData }) {
         method: "POST", headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
           model: "claude-sonnet-4-20250514", max_tokens: 1000,
-          system: `You are Vapers Opti AI, an expert Windows performance optimization assistant for gamers. Give concise hardware-specific advice under 200 words. Use **bold** for key points. ${hwContext}`,
+          system: `You are Vapers Opti AI, an expert Windows gaming optimization assistant. Give concise, actionable advice under 200 words. Use **bold** for key points. ${hwCtx}`,
           messages: [...messages.map(m => ({ role: m.role, content: m.content })), { role: "user", content: msg }]
         })
       });
@@ -315,10 +298,7 @@ function AIPanel({ onClose, scanData }) {
     <div style={{ position: "fixed", inset: 0, background: "#00000088", zIndex: 200, display: "flex", alignItems: "flex-end", justifyContent: "flex-end", padding: 24 }} onClick={onClose}>
       <div onClick={e => e.stopPropagation()} style={{ width: 420, height: 580, background: "#080808", border: `1px solid ${G}22`, borderRadius: 14, display: "flex", flexDirection: "column", fontFamily: mono }}>
         <div style={{ padding: "14px 18px", borderBottom: "1px solid #111", display: "flex", justifyContent: "space-between", alignItems: "center" }}>
-          <div>
-            <div style={{ fontSize: 13, fontWeight: 700, color: G }}>⚡ AI Advisor</div>
-            <div style={{ fontSize: 9, color: "#444", letterSpacing: 1 }}>HARDWARE-AWARE · POWERED BY CLAUDE</div>
-          </div>
+          <div><div style={{ fontSize: 13, fontWeight: 700, color: G }}>⚡ AI Advisor</div><div style={{ fontSize: 9, color: "#444", letterSpacing: 1 }}>HARDWARE-AWARE · POWERED BY CLAUDE</div></div>
           <button onClick={onClose} style={{ background: "none", border: "none", color: "#666", cursor: "pointer", fontSize: 16 }}>✕</button>
         </div>
         <div style={{ flex: 1, overflowY: "auto", padding: 14, display: "flex", flexDirection: "column", gap: 10 }}>
@@ -331,7 +311,7 @@ function AIPanel({ onClose, scanData }) {
           <div ref={endRef} />
         </div>
         <div style={{ padding: "8px 14px", display: "flex", gap: 5, flexWrap: "wrap" }}>
-          {["Best tweak for my GPU?", "Is my RAM XMP enabled?", "Why is my ping high?", "Safe tweaks only?"].map(q => (
+          {["Should I disable VBS?", "Is MPO causing my stutter?", "Best tweak for my GPU?", "Safe tweaks only?"].map(q => (
             <button key={q} onClick={() => setInput(q)} style={{ background: "transparent", border: "1px solid #111", color: "#666", fontFamily: mono, fontSize: 9, padding: "4px 8px", borderRadius: 4, cursor: "pointer" }}>{q}</button>
           ))}
         </div>
@@ -370,14 +350,13 @@ export default function App() {
   const [startupLoading, setStartupLoading] = useState(false);
   const [updateAvailable, setUpdateAvailable] = useState(false);
   const [updateReady, setUpdateReady] = useState(false);
-  const [driverData, setDriverData] = useState(null);
-  const [junkData, setJunkData] = useState(null);
   const [cleaning, setCleaning] = useState(false);
   const [cleanResult, setCleanResult] = useState(null);
+  const [fpsHz, setFpsHz] = useState(144);
+  const [fpsVrr, setFpsVrr] = useState("gsync");
 
   const inElectron = typeof window !== "undefined" && !!window.winforge;
 
-  // Auto-update listener
   useEffect(() => {
     if (!inElectron) return;
     const unsub = window.winforge.onEvent(e => {
@@ -387,21 +366,15 @@ export default function App() {
     return () => unsub();
   }, []);
 
-  // Notification on done
   useEffect(() => {
     if (page !== "done") return;
-    if ("Notification" in window && Notification.permission === "granted") {
-      new Notification("Vapers Opti ⚡ Optimization Complete!", {
-        body: `${selectedTweaks.size} tweaks applied. Score: ${score} → ${projected}/100.`,
-      });
-    } else if ("Notification" in window && Notification.permission !== "denied") {
-      Notification.requestPermission().then(p => {
-        if (p === "granted") new Notification("Vapers Opti ⚡", { body: `${selectedTweaks.size} tweaks applied!` });
-      });
+    if ("Notification" in window) {
+      const show = () => new Notification("Vapers Opti ⚡", { body: `${selectedTweaks.size} tweaks applied. Score improved!` });
+      if (Notification.permission === "granted") show();
+      else if (Notification.permission !== "denied") Notification.requestPermission().then(p => { if (p === "granted") show(); });
     }
   }, [page]);
 
-  // Scan effect
   useEffect(() => {
     if (page !== "scan") return;
     setScanStep(0);
@@ -424,7 +397,6 @@ export default function App() {
     return () => [t1,t2,t3,t4,t5,t6,t7,t8].forEach(clearTimeout);
   }, [page]);
 
-  // Apply effect
   useEffect(() => {
     if (page !== "applying") return;
     const list = Array.from(selectedTweaks);
@@ -450,7 +422,6 @@ export default function App() {
     return () => clearInterval(iv);
   }, [page]);
 
-  // Auto-detect games on profile page
   useEffect(() => {
     if (page !== "profile" || installedGames || !inElectron || detectingGames) return;
     setDetectingGames(true);
@@ -463,38 +434,22 @@ export default function App() {
     }).catch(() => setDetectingGames(false));
   }, [page]);
 
-  // Load startup apps
   useEffect(() => {
     if (tab !== "startup" || realStartup || !inElectron || startupLoading) return;
     setStartupLoading(true);
     window.winforge.getStartupApps().then(res => {
-      if (res?.success && res.data) {
-        const r = res.data.find(d => d.type === "startup_apps");
-        if (r?.apps) setRealStartup(r.apps);
-      }
+      if (res?.success && res.data) { const r = res.data.find(d => d.type === "startup_apps"); if (r?.apps) setRealStartup(r.apps); }
       setStartupLoading(false);
     }).catch(() => setStartupLoading(false));
   }, [tab]);
 
-  // Load thermals
   useEffect(() => {
     if (tab !== "thermal" || !inElectron || thermalLoading) return;
     setThermalLoading(true);
     window.winforge.getThermals().then(res => {
-      if (res?.success && res.data) {
-        const r = res.data.find(d => d.type === "thermal_data");
-        if (r) setThermalData(r);
-      }
+      if (res?.success && res.data) { const r = res.data.find(d => d.type === "thermal_data"); if (r) setThermalData(r); }
       setThermalLoading(false);
     }).catch(() => setThermalLoading(false));
-  }, [tab]);
-
-  // Load drivers
-  useEffect(() => {
-    if (tab !== "drivers" || driverData || !inElectron) return;
-    window.winforge.getInstalledGames && fetch && window.winforge.runPing; // ensure api exists
-    // Use the drivers mode via a direct invoke if available
-    window.winforge.scanSystem && window.winforge.getStartupApps; // just checking
   }, [tab]);
 
   const runPing = async () => {
@@ -503,7 +458,7 @@ export default function App() {
     try {
       const res = await window.winforge.runPing();
       if (res?.success && res.data) { const r = res.data.find(d => d.type === "ping_results"); if (r) setPingData(r.results); }
-    } catch (err) { console.error(err); }
+    } catch {}
     setPingLoading(false);
   };
 
@@ -511,9 +466,9 @@ export default function App() {
     if (!inElectron) return;
     setCleaning(true);
     try {
-      const res = await window.winforge.applyTweaks(["clean_junk"]);
+      await window.winforge.applyTweaks(["clean_junk"]);
       setCleanResult("Junk files cleaned successfully!");
-    } catch (err) { setCleanResult("Clean complete."); }
+    } catch { setCleanResult("Clean complete."); }
     setCleaning(false);
   };
 
@@ -531,7 +486,7 @@ export default function App() {
   });
 
   const score = realScan?.score || 72;
-  const projected = Math.min(99, Math.round(score + selectedTweaks.size * 0.9));
+  const projected = Math.min(99, Math.round(score + selectedTweaks.size * 0.85));
   const rebootNeeded = ALL_TWEAKS.filter(t => selectedTweaks.has(t.id) && t.reboot).length;
   const sd = realScan;
 
@@ -542,7 +497,7 @@ export default function App() {
     ["Primary Storage", sd ? `${sd.storage.model} · ${sd.storage.isNvme ? "NVMe" : "SATA"}` : "Detecting..."],
     ["Network Interface", sd ? `${sd.network.name} · ${sd.network.speed} · ${sd.network.isEthernet ? "Ethernet" : "WiFi"}` : "Detecting..."],
     ["Windows Build", sd ? `${sd.windows.version} · Build ${sd.windows.build}` : "Detecting..."],
-    ["Services Audit", "Scanning running services..."],
+    ["VBS / MPO Status", sd ? `VBS: ${sd.vbsEnabled ? "⚠ ENABLED" : "✓ Off"} · MPO: ${sd.mpoEnabled ? "⚠ ENABLED" : "✓ Off"}` : "Detecting..."],
     ["Performance Issues Found", sd ? `${sd.issues.filter(i => i.severity === "high").length} critical · ${sd.issues.filter(i => i.severity === "medium").length} medium` : "Detecting..."],
   ];
 
@@ -565,25 +520,22 @@ export default function App() {
         <div style={{ fontSize: 10, letterSpacing: 8, color: `${G}55`, marginBottom: 18 }}>WINDOWS OPTIMIZATION SUITE</div>
         <h1 style={{ fontFamily: bebas, fontSize: 110, color: "#fff", letterSpacing: 10, margin: 0, lineHeight: 0.9 }}>VAPERS <span style={{ color: G }}>OPTI</span></h1>
         <div style={{ marginTop: 10, fontSize: 10, letterSpacing: 4, color: "#444" }}>INTELLIGENT · HARDWARE-AWARE · ANTI-CHEAT SAFE · 100% FREE</div>
-
-        {/* Anti-cheat badge */}
-        <div style={{ marginTop: 20, display: "flex", gap: 8, justifyContent: "center", flexWrap: "wrap" }}>
+        <div style={{ marginTop: 18, display: "flex", gap: 8, justifyContent: "center", flexWrap: "wrap" }}>
           {["✅ Vanguard Safe", "✅ Ricochet Safe", "✅ EAC Safe", "✅ FaceIT Safe", "✅ BattlEye Safe"].map(b => (
             <span key={b} style={{ fontFamily: mono, fontSize: 9, color: G, background: `${G}10`, border: `1px solid ${G}22`, borderRadius: 4, padding: "3px 8px" }}>{b}</span>
           ))}
         </div>
-
-        <div style={{ marginTop: 44, display: "flex", flexDirection: "column", alignItems: "center", gap: 12 }}>
+        <div style={{ marginTop: 40, display: "flex", flexDirection: "column", alignItems: "center", gap: 12 }}>
           <button onClick={() => setPage("scan")}
             style={{ background: G, color: "#000", border: "none", fontFamily: mono, fontWeight: 800, fontSize: 12, letterSpacing: 4, padding: "17px 52px", cursor: "pointer", borderRadius: 3, boxShadow: `0 0 40px ${G}30`, textTransform: "uppercase", transition: "all 0.2s" }}
             onMouseEnter={e => { e.target.style.boxShadow = `0 0 60px ${G}60`; e.target.style.transform = "translateY(-1px)"; }}
             onMouseLeave={e => { e.target.style.boxShadow = `0 0 40px ${G}30`; e.target.style.transform = "none"; }}>
             ⚡ Scan My System
           </button>
-          <div style={{ fontSize: 9, color: "#333", letterSpacing: 2 }}>100% LOCAL · NO ACCOUNT NEEDED · NO ADS · OPEN SOURCE</div>
+          <div style={{ fontSize: 9, color: "#333", letterSpacing: 2 }}>100% LOCAL · NO ACCOUNT · NO ADS · OPEN SOURCE</div>
         </div>
-        <div style={{ marginTop: 60, display: "flex", gap: 48, justifyContent: "center" }}>
-          {[["55+", "Tweaks"], ["7", "Modules"], ["0ms", "Added Latency"], ["100%", "Free Forever"]].map(([n, l]) => (
+        <div style={{ marginTop: 56, display: "flex", gap: 48, justifyContent: "center" }}>
+          {[["60+", "Tweaks"], ["9", "Modules"], ["0ms", "Added Latency"], ["100%", "Free Forever"]].map(([n, l]) => (
             <div key={l} style={{ textAlign: "center" }}>
               <div style={{ fontFamily: bebas, fontSize: 38, color: G, lineHeight: 1 }}>{n}</div>
               <div style={{ fontSize: 9, color: "#444", letterSpacing: 2, marginTop: 4 }}>{l}</div>
@@ -599,12 +551,12 @@ export default function App() {
     <div style={{ minHeight: "100vh", background: "#020202", display: "flex", flexDirection: "column", alignItems: "center", justifyContent: "center", fontFamily: mono, padding: 40 }}>
       <link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;600;700;800&family=Bebas+Neue&display=swap" rel="stylesheet" />
       <div style={{ fontFamily: bebas, fontSize: 54, color: "#fff", letterSpacing: 8, marginBottom: 6 }}>SCANNING SYSTEM</div>
-      <div style={{ fontSize: 9, color: "#555", letterSpacing: 3, marginBottom: 44 }}>HARDWARE · SOFTWARE · NETWORK · SERVICES · DRIVERS</div>
-      <div style={{ width: "100%", maxWidth: 660 }}>
+      <div style={{ fontSize: 9, color: "#555", letterSpacing: 3, marginBottom: 44 }}>HARDWARE · SOFTWARE · NETWORK · SECURITY · SERVICES</div>
+      <div style={{ width: "100%", maxWidth: 680 }}>
         {scanLabels.map(([label, value], i) => (
           <div key={i} style={{ display: "flex", justifyContent: "space-between", padding: "12px 0", borderBottom: "1px solid #0d0d0d", opacity: scanStep > i ? 1 : 0.2, transition: "opacity 0.4s ease" }}>
             <span style={{ fontFamily: mono, fontSize: 11, color: "#aaa" }}>{scanStep > i ? "▸" : "○"} {label}</span>
-            <span style={{ fontFamily: mono, fontSize: 11, color: scanStep > i ? (i === 7 ? R : G) : "#222", fontWeight: 600 }}>{scanStep > i ? value : "—"}</span>
+            <span style={{ fontFamily: mono, fontSize: 11, color: scanStep > i ? (i === 7 ? R : i === 6 ? (sd?.vbsEnabled || sd?.mpoEnabled ? Y : G) : G) : "#222", fontWeight: 600 }}>{scanStep > i ? value : "—"}</span>
           </div>
         ))}
         <div style={{ marginTop: 24, height: 2, background: "#0a0a0a", borderRadius: 1, overflow: "hidden" }}>
@@ -617,15 +569,17 @@ export default function App() {
                 <div style={{ fontSize: 9, color: "#555", letterSpacing: 2, marginBottom: 6 }}>PERFORMANCE SCORE</div>
                 <div style={{ fontFamily: bebas, fontSize: 76, color: Y, lineHeight: 1 }}>{score}<span style={{ fontSize: 34, color: "#333" }}>/100</span></div>
               </div>
-              <div style={{ width: 1, height: 70, background: "#111" }} />
+              <div style={{ width: 1, height: 80, background: "#111" }} />
               <div style={{ display: "flex", flexDirection: "column", gap: 8 }}>
                 {sd ? (<>
                   <div style={{ fontSize: 11, color: R }}>⚠ {sd.issues.filter(i => i.severity === "high").length} critical issues</div>
                   <div style={{ fontSize: 11, color: Y }}>⚠ {sd.issues.filter(i => i.severity === "medium").length} medium issues</div>
+                  {sd.vbsEnabled && <div style={{ fontSize: 11, color: Y }}>⚠ VBS costing 5-15% FPS</div>}
+                  {sd.mpoEnabled && <div style={{ fontSize: 11, color: Y }}>⚠ MPO may cause stutter</div>}
                   <div style={{ fontSize: 11, color: G }}>✓ {sd.cpu.name}</div>
                   <div style={{ fontSize: 11, color: G }}>✓ {sd.gpu.name}</div>
                 </>) : (<>
-                  <div style={{ fontSize: 11, color: R }}>⚠ Multiple issues found</div>
+                  <div style={{ fontSize: 11, color: R }}>⚠ Issues detected</div>
                   <div style={{ fontSize: 11, color: "#555" }}>✓ Hardware detected</div>
                 </>)}
               </div>
@@ -777,13 +731,27 @@ export default function App() {
       {/* Update banners */}
       {updateReady && (
         <div style={{ background: G, color: "#000", padding: "10px 24px", fontSize: 11, fontFamily: mono, fontWeight: 700, display: "flex", justifyContent: "space-between", alignItems: "center" }}>
-          ⚡ Update ready to install — restart to apply
+          ⚡ Update ready — restart to apply
           <button style={{ background: "#000", color: G, border: "none", fontFamily: mono, fontWeight: 800, fontSize: 10, padding: "6px 16px", cursor: "pointer", borderRadius: 4 }}>Restart & Update</button>
         </div>
       )}
       {updateAvailable && !updateReady && (
         <div style={{ background: "#0a150d", color: G, padding: "8px 24px", fontSize: 10, fontFamily: mono, borderBottom: `1px solid ${G}22` }}>
-          ⬇ New version available — downloading in background...
+          ⬇ New version downloading in background...
+        </div>
+      )}
+
+      {/* VBS/MPO warning banners */}
+      {sd?.vbsEnabled && (
+        <div style={{ background: "#150a00", color: Y, padding: "8px 24px", fontSize: 10, fontFamily: mono, borderBottom: `1px solid ${Y}22`, display: "flex", justifyContent: "space-between", alignItems: "center" }}>
+          ⚠ VBS is enabled — costing you 5-15% FPS. See System tweaks to disable.
+          <button onClick={() => { setTab("tweaks"); setCatFilter("System"); setSearchQ("VBS"); }} style={{ background: `${Y}15`, color: Y, border: `1px solid ${Y}33`, fontFamily: mono, fontSize: 9, padding: "4px 10px", cursor: "pointer", borderRadius: 4 }}>Fix It →</button>
+        </div>
+      )}
+      {sd?.mpoEnabled && (
+        <div style={{ background: "#150a00", color: Y, padding: "8px 24px", fontSize: 10, fontFamily: mono, borderBottom: `1px solid ${Y}22`, display: "flex", justifyContent: "space-between", alignItems: "center" }}>
+          ⚠ MPO is enabled — may cause GPU stutter and driver crashes. See GPU tweaks to disable.
+          <button onClick={() => { setTab("tweaks"); setCatFilter("GPU"); setSearchQ("MPO"); }} style={{ background: `${Y}15`, color: Y, border: `1px solid ${Y}33`, fontFamily: mono, fontSize: 9, padding: "4px 10px", cursor: "pointer", borderRadius: 4 }}>Fix It →</button>
         </div>
       )}
 
@@ -813,7 +781,7 @@ export default function App() {
 
       {/* Tabs */}
       <div style={{ display: "flex", borderBottom: "1px solid #0a0a0a", padding: "0 24px", overflowX: "auto" }}>
-        {[["tweaks","⚡ Tweaks"],["gameguides","🎮 Game Guides"],["benchmark","📊 Benchmark"],["overclock","🔥 Overclock"],["drivers","🔧 Drivers"],["startup","🚀 Startup"],["thermal","🌡️ Thermals"],["presets","⚙️ Presets"],["settings","🔩 Settings"]].map(([id, label]) => (
+        {[["tweaks","⚡ Tweaks"],["gameguides","🎮 Game Guides"],["benchmark","📊 Benchmark"],["overclock","🔥 Overclock"],["drivers","🔧 Drivers"],["diagnostics","🔬 Diagnostics"],["nvidia","🟢 NVIDIA"],["fpscalc","🎯 FPS Cap"],["startup","🚀 Startup"],["thermal","🌡️ Thermals"],["presets","⚙️ Presets"],["settings","🔩 Settings"]].map(([id, label]) => (
           <button key={id} onClick={() => setTab(id)} style={{ background: "transparent", border: "none", borderBottom: `2px solid ${tab === id ? G : "transparent"}`, color: tab === id ? G : "#555", fontFamily: mono, fontSize: 10, letterSpacing: 1, padding: "14px 16px", cursor: "pointer", transition: "all 0.15s", whiteSpace: "nowrap" }}>{label}</button>
         ))}
       </div>
@@ -834,7 +802,7 @@ export default function App() {
           {rebootNeeded > 0 && <div style={{ marginLeft: 8, fontSize: 9, color: Y }}>⚠ {rebootNeeded} need reboot</div>}
         </div>
 
-        {/* TWEAKS TAB */}
+        {/* TWEAKS */}
         {tab === "tweaks" && (
           <div>
             <div style={{ display: "flex", gap: 8, marginBottom: 14, alignItems: "center", flexWrap: "wrap" }}>
@@ -858,11 +826,11 @@ export default function App() {
           </div>
         )}
 
-        {/* GAME GUIDES TAB */}
+        {/* GAME GUIDES */}
         {tab === "gameguides" && (
           <div>
             <div style={{ fontFamily: bebas, fontSize: 30, color: "#fff", letterSpacing: 6, marginBottom: 4 }}>GAME SETTINGS GUIDES</div>
-            <div style={{ fontSize: 9, color: "#555", letterSpacing: 2, marginBottom: 20 }}>EXACT IN-GAME SETTINGS USED BY PRO PLAYERS FOR MAX FPS AND MIN INPUT LAG</div>
+            <div style={{ fontSize: 9, color: "#555", letterSpacing: 2, marginBottom: 20 }}>EXACT PRO PLAYER SETTINGS FOR MAX FPS AND MIN INPUT LAG</div>
             <div style={{ display: "grid", gridTemplateColumns: "repeat(2,1fr)", gap: 12 }}>
               {Object.entries(GAME_GUIDES).map(([key, guide]) => (
                 <div key={key} onClick={() => setGameGuide(guide)} style={{ background: "#060606", border: `1px solid ${guide.color}22`, borderRadius: 12, padding: "20px 22px", cursor: "pointer", transition: "all 0.2s" }}
@@ -873,13 +841,12 @@ export default function App() {
                     <span style={{ fontFamily: mono, fontSize: 8, color: guide.color, border: `1px solid ${guide.color}33`, borderRadius: 3, padding: "2px 6px", fontWeight: 700 }}>{guide.settings.length} SETTINGS</span>
                   </div>
                   <div style={{ fontSize: 13, color: "#e0e0e0", fontWeight: 700, marginBottom: 6 }}>{guide.name}</div>
-                  <div style={{ fontSize: 10, color: "#555", lineHeight: 1.6, marginBottom: 12 }}>Pro-level settings guide with explanations for every option.</div>
+                  <div style={{ fontSize: 10, color: "#555", lineHeight: 1.6, marginBottom: 12 }}>Complete pro settings guide with reason for every option.</div>
                   <div style={{ fontSize: 9, color: guide.color }}>→ Open Settings Guide</div>
                 </div>
               ))}
-              {/* Coming soon cards */}
               {[{ name: "Apex Legends", icon: "🔶" },{ name: "Rainbow Six Siege", icon: "🛡️" }].map(g => (
-                <div key={g.name} style={{ background: "#040404", border: "1px solid #0a0a0a", borderRadius: 12, padding: "20px 22px", opacity: 0.5 }}>
+                <div key={g.name} style={{ background: "#040404", border: "1px solid #0a0a0a", borderRadius: 12, padding: "20px 22px", opacity: 0.4 }}>
                   <div style={{ fontSize: 28, marginBottom: 10 }}>{g.icon}</div>
                   <div style={{ fontSize: 13, color: "#555", fontWeight: 700, marginBottom: 6 }}>{g.name}</div>
                   <div style={{ fontSize: 9, color: "#333" }}>Coming in next update</div>
@@ -889,7 +856,7 @@ export default function App() {
           </div>
         )}
 
-        {/* BENCHMARK TAB */}
+        {/* BENCHMARK */}
         {tab === "benchmark" && (
           <div>
             <div style={{ fontFamily: bebas, fontSize: 30, color: "#fff", letterSpacing: 6, marginBottom: 20 }}>BEFORE / AFTER BENCHMARK</div>
@@ -926,7 +893,7 @@ export default function App() {
           </div>
         )}
 
-        {/* OVERCLOCK TAB */}
+        {/* OVERCLOCK */}
         {tab === "overclock" && (
           <div>
             <div style={{ fontFamily: bebas, fontSize: 30, color: "#fff", letterSpacing: 6, marginBottom: 4 }}>OVERCLOCK GUIDE</div>
@@ -946,14 +913,14 @@ export default function App() {
           </div>
         )}
 
-        {/* DRIVERS TAB */}
+        {/* DRIVERS */}
         {tab === "drivers" && (
           <div>
             <div style={{ fontFamily: bebas, fontSize: 30, color: "#fff", letterSpacing: 6, marginBottom: 20 }}>DRIVER CHECKER</div>
             <div style={{ display: "flex", flexDirection: "column", gap: 10 }}>
               {[
-                { name: "GPU Driver (NVIDIA)", status: "CHECK MANUALLY", sc: Y, desc: sd?.gpu?.driver ? `Your installed driver: ${sd.gpu.driver}. Visit nvidia.com/drivers to check if newer Game Ready driver is available.` : "Visit nvidia.com/drivers to get latest Game Ready driver.", url: "nvidia.com/drivers" },
-                { name: "AMD Chipset Driver", status: "CHECK MANUALLY", sc: Y, desc: "AMD chipset drivers affect CPU-to-memory speed and PCIe performance. Update every 3-6 months.", url: "amd.com/drivers" },
+                { name: "GPU Driver (NVIDIA)", status: "CHECK MANUALLY", sc: Y, desc: sd?.gpu?.driver ? `Your installed driver: ${sd.gpu.driver}. Visit nvidia.com/drivers to get latest Game Ready driver.` : "Visit nvidia.com/drivers to get the latest Game Ready driver.", url: "nvidia.com/drivers" },
+                { name: "AMD Chipset Driver", status: "CHECK MANUALLY", sc: Y, desc: "AMD chipset drivers affect CPU-to-memory bandwidth and PCIe performance. Update every 3-6 months.", url: "amd.com/drivers" },
                 { name: "Network Adapter Driver", status: "CHECK MANUALLY", sc: Y, desc: "Updated NIC drivers improve ping consistency and reduce packet loss in competitive games.", url: "intel.com/network-adapters" },
                 { name: "Audio Driver (Realtek)", status: "CHECK MANUALLY", sc: Y, desc: "Realtek or dedicated audio drivers reduce audio latency. Avoid generic Windows audio driver.", url: "realtek.com" },
               ].map((d, i) => (
@@ -968,18 +935,182 @@ export default function App() {
               ))}
             </div>
             <div style={{ marginTop: 16, padding: "14px 18px", background: `${G}08`, border: `1px solid ${G}15`, borderRadius: 10, fontSize: 10, color: "#666", lineHeight: 1.7 }}>
-              💡 <strong style={{ color: G }}>Pro tip:</strong> Never use Driver Booster or similar auto-updaters — they install wrong driver versions. Always download directly from manufacturer websites.
+              💡 <strong style={{ color: G }}>Pro tip:</strong> Never use Driver Booster or auto-updaters — they install wrong driver versions. Always download directly from manufacturer websites.
             </div>
           </div>
         )}
 
-        {/* STARTUP TAB */}
+        {/* DIAGNOSTICS */}
+        {tab === "diagnostics" && (
+          <div>
+            <div style={{ fontFamily: bebas, fontSize: 30, color: "#fff", letterSpacing: 6, marginBottom: 4 }}>SYSTEM DIAGNOSTICS</div>
+            <div style={{ fontSize: 9, color: "#555", letterSpacing: 2, marginBottom: 20 }}>DPC LATENCY · REBAR · DIRECTSTORAGE · RAM CHANNEL</div>
+            <div style={{ background: "#060606", border: `1px solid ${R}22`, borderRadius: 10, padding: "20px 22px", marginBottom: 14 }}>
+              <div style={{ fontSize: 13, color: "#e0e0e0", fontWeight: 700, marginBottom: 8 }}>🔬 DPC Latency — The Hidden Stutter Killer</div>
+              <div style={{ fontSize: 10, color: "#666", lineHeight: 1.7, marginBottom: 14 }}>DPC (Deferred Procedure Call) latency causes micro-stutters, audio pops, and input lag spikes even when FPS looks fine. Use <strong style={{ color: Y }}>LatencyMon</strong> (free from resplendence.com) to identify your offending driver. Common culprits:</div>
+              <div style={{ display: "grid", gridTemplateColumns: "repeat(2,1fr)", gap: 8, marginBottom: 14 }}>
+                {[
+                  { driver: "ndis.sys", cause: "Network adapter", fix: "Disable IPv6, update NIC driver, disable interrupt moderation" },
+                  { driver: "nvlddmkm.sys", cause: "NVIDIA GPU driver", fix: "Clean reinstall GPU driver with DDU, disable MPO, disable HAGS on older GPUs" },
+                  { driver: "dxgkrnl.sys", cause: "DirectX kernel", fix: "Update GPU driver, check VBS status, update Windows" },
+                  { driver: "portcls.sys", cause: "Audio driver", fix: "Get latest audio driver from motherboard vendor site, not Windows Update" },
+                  { driver: "storport.sys", cause: "Storage driver", fix: "Use Windows standard NVMe driver, remove vendor NVMe driver" },
+                  { driver: "HDAudBus.sys", cause: "HD Audio bus", fix: "Disable unused audio devices in Device Manager" },
+                ].map(d => (
+                  <div key={d.driver} style={{ background: "#0a0a0a", border: "1px solid #111", borderRadius: 8, padding: "12px 14px" }}>
+                    <div style={{ fontFamily: mono, fontSize: 10, color: R, fontWeight: 700, marginBottom: 4 }}>{d.driver}</div>
+                    <div style={{ fontSize: 9, color: "#888", marginBottom: 5 }}>{d.cause}</div>
+                    <div style={{ fontSize: 9, color: "#555", lineHeight: 1.5 }}>Fix: {d.fix}</div>
+                  </div>
+                ))}
+              </div>
+              <div style={{ display: "flex", gap: 8 }}>
+                <div style={{ padding: "10px 14px", background: `${Y}10`, border: `1px solid ${Y}22`, borderRadius: 6, fontSize: 9, color: Y, flex: 1 }}>💡 Run LatencyMon for 2 min while gaming to find your specific offending driver. Red bars = problem.</div>
+                <div style={{ padding: "10px 14px", background: `${G}10`, border: `1px solid ${G}22`, borderRadius: 6, fontSize: 9, color: G, flex: 1 }}>✓ Vapers Opti fixes: <strong>Disable IPv6 + Dynamic Tick off + NIC Interrupt Moderation off + MPO off</strong></div>
+              </div>
+            </div>
+            <div style={{ background: "#060606", border: `1px solid ${G}22`, borderRadius: 10, padding: "20px 22px", marginBottom: 14 }}>
+              <div style={{ fontSize: 13, color: "#e0e0e0", fontWeight: 700, marginBottom: 8 }}>⚡ Resizable BAR Status (ReBAR / Smart Access Memory)</div>
+              <div style={{ display: "flex", gap: 10, marginBottom: 12 }}>
+                <div style={{ flex: 1, padding: "12px", background: sd?.reBarEnabled ? `${G}10` : `${R}10`, border: `1px solid ${sd?.reBarEnabled ? G : R}33`, borderRadius: 8, textAlign: "center" }}>
+                  <div style={{ fontFamily: bebas, fontSize: 26, color: sd?.reBarEnabled ? G : R }}>{sd?.reBarEnabled ? "✓ ACTIVE" : sd ? "✗ DISABLED" : "UNKNOWN"}</div>
+                  <div style={{ fontSize: 8, color: "#555", marginTop: 4 }}>ReBAR Status — 5-15% free FPS</div>
+                </div>
+                <div style={{ flex: 2, fontSize: 10, color: "#666", lineHeight: 1.7 }}>
+                  ReBAR lets your CPU access full GPU VRAM at once instead of 256MB chunks. <strong style={{ color: G }}>5-15% free FPS</strong>, better 1% lows. Needs: RTX 3000+ or RX 6000+, Intel 10th gen or Ryzen 3000+ CPU.
+                </div>
+              </div>
+              {!sd?.reBarEnabled && <div style={{ fontSize: 10, color: Y, background: `${Y}08`, border: `1px solid ${Y}20`, borderRadius: 8, padding: "12px 14px" }}>
+                <strong>Enable in BIOS:</strong> 1. Enter BIOS (DEL/F2) → 2. Enable "Above 4G Decoding" → 3. Enable "Resizable BAR" or "Re-Size BAR Support" → 4. Save and reboot → Verify in GPU-Z under PCI-E BAR1 size
+              </div>}
+            </div>
+            <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 12 }}>
+              <div style={{ background: "#060606", border: `1px solid ${B}22`, borderRadius: 10, padding: "18px 20px" }}>
+                <div style={{ fontSize: 12, color: "#e0e0e0", fontWeight: 700, marginBottom: 8 }}>⚡ DirectStorage</div>
+                <div style={{ display: "flex", gap: 8, marginBottom: 10 }}>
+                  <div style={{ padding: "8px 10px", background: sd?.storage?.isNvme ? `${G}10` : `${R}10`, border: `1px solid ${sd?.storage?.isNvme ? G : R}33`, borderRadius: 6, fontSize: 9, color: sd?.storage?.isNvme ? G : R, fontWeight: 700 }}>{sd?.storage?.isNvme ? "NVMe ✓" : "No NVMe ✗"}</div>
+                  <div style={{ padding: "8px 10px", background: `${G}10`, border: `1px solid ${G}33`, borderRadius: 6, fontSize: 9, color: G, fontWeight: 700 }}>Win11 ✓</div>
+                </div>
+                <div style={{ fontSize: 9, color: "#555", lineHeight: 1.6 }}>Sends game assets directly NVMe→GPU. Cuts load times from 10s to 2s in supported games. Works automatically — just needs NVMe + Win11.</div>
+              </div>
+              <div style={{ background: "#060606", border: `1px solid ${Y}22`, borderRadius: 10, padding: "18px 20px" }}>
+                <div style={{ fontSize: 12, color: "#e0e0e0", fontWeight: 700, marginBottom: 8 }}>💾 RAM Configuration</div>
+                <div style={{ display: "flex", gap: 8, marginBottom: 10 }}>
+                  <div style={{ padding: "8px 10px", background: sd?.ram?.sticks === 2 ? `${G}10` : `${R}10`, border: `1px solid ${sd?.ram?.sticks === 2 ? G : R}33`, borderRadius: 6, fontSize: 9, color: sd?.ram?.sticks === 2 ? G : R, fontWeight: 700 }}>{sd?.ram?.sticks === 2 ? "Dual Channel ✓" : sd?.ram?.sticks === 1 ? "Single Channel ✗" : `${sd?.ram?.sticks || "?"} sticks`}</div>
+                  <div style={{ padding: "8px 10px", background: sd?.ram?.speedMHz >= 3200 ? `${G}10` : `${R}10`, border: `1px solid ${sd?.ram?.speedMHz >= 3200 ? G : R}33`, borderRadius: 6, fontSize: 9, color: sd?.ram?.speedMHz >= 3200 ? G : R, fontWeight: 700 }}>{sd?.ram?.speedMHz || "?"}MHz {sd?.ram?.speedMHz < 3200 ? "⚠" : "✓"}</div>
+                </div>
+                {sd?.ram?.sticks === 1 ? <div style={{ fontSize: 9, color: R, lineHeight: 1.6 }}>⚠ Single channel halves memory bandwidth! Adding a matching stick in the correct slot (slots 2+4 on most boards) can add 20-40% performance.</div> : <div style={{ fontSize: 9, color: "#555", lineHeight: 1.6 }}>Dual channel confirmed. Make sure XMP/EXPO is enabled in BIOS to run at rated speed.</div>}
+              </div>
+            </div>
+          </div>
+        )}
+
+        {/* NVIDIA GUIDE */}
+        {tab === "nvidia" && (
+          <div>
+            <div style={{ fontFamily: bebas, fontSize: 30, color: "#fff", letterSpacing: 6, marginBottom: 4 }}>NVIDIA CONTROL PANEL GUIDE</div>
+            <div style={{ fontSize: 9, color: "#555", letterSpacing: 2, marginBottom: 16 }}>EXACT SETTINGS FOR MAX FPS AND MINIMUM INPUT LAG — 2025/2026 RESEARCH</div>
+            {sd?.gpu?.vendor !== "nvidia" && sd && <div style={{ padding: "10px 14px", background: `${Y}10`, border: `1px solid ${Y}22`, borderRadius: 8, fontSize: 10, color: Y, marginBottom: 14 }}>⚠ Your GPU ({sd.gpu.name}) may not be NVIDIA. This guide applies to NVIDIA GPUs.</div>}
+            <div style={{ display: "flex", flexDirection: "column", gap: 7 }}>
+              {[
+                { setting: "Power Management Mode", value: "Prefer Maximum Performance", impact: "HIGH", color: R, reason: "Prevents GPU clock drops between frames. Eliminates stutter at scene transitions. Most impactful single setting." },
+                { setting: "Low Latency Mode", value: "On (Off if game has NVIDIA Reflex)", impact: "HIGH", color: R, reason: "Reduces GPU render queue depth. Cuts input lag 10-30ms. Disable only in Valorant, Fortnite, CoD where Reflex is superior." },
+                { setting: "Shader Cache Size", value: "10 GB", impact: "HIGH", color: R, reason: "Default 256MB fills up fast causing mid-session recompilation stutters. 10GB prevents this in Fortnite, CoD, open world games." },
+                { setting: "Vertical Sync", value: "Off", impact: "HIGH", color: R, reason: "Adds 1-3 frames of input lag at all times. Use G-Sync/FreeSync + FPS cap instead. Never use VSync in competitive." },
+                { setting: "Texture Filtering — Quality", value: "High Performance", impact: "MEDIUM", color: Y, reason: "Enables trilinear optimization for free FPS. Minimal visual difference at 1080p and 1440p." },
+                { setting: "Texture Filtering — Anisotropic", value: "On", impact: "LOW", color: G, reason: "Reduces texture filtering overhead slightly." },
+                { setting: "Triple Buffering", value: "Off", impact: "MEDIUM", color: Y, reason: "Only useful with VSync enabled. Since VSync is off this wastes VRAM." },
+                { setting: "Max Frame Rate", value: "Monitor Hz - 3 for G-Sync (e.g. 141 at 144Hz)", impact: "MEDIUM", color: Y, reason: "Keeps GPU in VRR range to prevent VSync fallback. Only set this if using G-Sync/FreeSync." },
+                { setting: "Antialiasing — Mode", value: "Application Controlled", impact: "LOW", color: G, reason: "Modern games handle AA internally via TAA/DLSS. NCP override breaks these and hurts performance." },
+                { setting: "NVIDIA Reflex (in-game)", value: "On + Boost", impact: "HIGH", color: R, reason: "THE best latency reduction. Always enable in Valorant, Fortnite, CoD, Apex when available. Beats Low Latency Mode." },
+              ].map((s, i) => (
+                <div key={i} style={{ background: "#060606", border: "1px solid #0e0e0e", borderRadius: 10, padding: "13px 16px", display: "flex", justifyContent: "space-between", alignItems: "flex-start", gap: 14 }}>
+                  <div style={{ flex: 1 }}>
+                    <div style={{ fontSize: 11, color: "#e0e0e0", fontWeight: 600, marginBottom: 4 }}>{s.setting}</div>
+                    <div style={{ fontSize: 9, color: "#555", lineHeight: 1.5 }}>{s.reason}</div>
+                  </div>
+                  <div style={{ display: "flex", flexDirection: "column", alignItems: "flex-end", gap: 4, flexShrink: 0 }}>
+                    <div style={{ fontFamily: mono, fontSize: 10, color: G, background: `${G}11`, border: `1px solid ${G}22`, borderRadius: 4, padding: "4px 10px", whiteSpace: "nowrap", fontWeight: 700 }}>{s.value}</div>
+                    <span style={{ fontFamily: mono, fontSize: 8, color: s.color, border: `1px solid ${s.color}33`, borderRadius: 3, padding: "2px 6px", fontWeight: 700 }}>{s.impact} IMPACT</span>
+                  </div>
+                </div>
+              ))}
+            </div>
+            <div style={{ marginTop: 14, padding: "13px 16px", background: `${Y}08`, border: `1px solid ${Y}15`, borderRadius: 10, fontSize: 10, color: "#666", lineHeight: 1.7 }}>
+              💡 <strong style={{ color: Y }}>To open:</strong> Right-click desktop → NVIDIA Control Panel → Manage 3D Settings → Global Settings tab → Apply all above → click Apply button.
+            </div>
+          </div>
+        )}
+
+        {/* FPS CAP CALCULATOR */}
+        {tab === "fpscalc" && (() => {
+          const refresh = parseInt(fpsHz) || 144;
+          const caps = {
+            gsync: { cap: refresh - 3, label: "G-Sync / FreeSync Premium Pro", why: "Stay 3 FPS below max refresh to keep GPU in VRR range and prevent VSync fallback latency penalty." },
+            freesync: { cap: refresh + 3, label: "FreeSync Basic", why: "Push slightly above max. Basic FreeSync monitors tolerate slightly over the VRR range for consistent delivery." },
+            novrr: { cap: refresh, label: "No VRR — Match Refresh", why: "Match your monitor refresh exactly. Higher = wasted GPU, lower = inconsistent framerate." },
+            nopq: { cap: Math.round(refresh * 0.8), label: "No VRR — Quality / Stable", why: "80% of refresh rate for ultra stable frametimes in single player or demanding titles." },
+          };
+          const chosen = caps[fpsVrr];
+          return (
+            <div>
+              <div style={{ fontFamily: bebas, fontSize: 30, color: "#fff", letterSpacing: 6, marginBottom: 4 }}>FPS CAP CALCULATOR</div>
+              <div style={{ fontSize: 9, color: "#555", letterSpacing: 2, marginBottom: 20 }}>FIND YOUR OPTIMAL FPS LIMIT FOR ZERO TEARING AND MINIMUM LATENCY</div>
+              <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 14, marginBottom: 20 }}>
+                <div style={{ background: "#060606", border: "1px solid #0e0e0e", borderRadius: 10, padding: "20px" }}>
+                  <div style={{ fontSize: 9, color: G, letterSpacing: 2, marginBottom: 12 }}>YOUR MONITOR REFRESH RATE</div>
+                  <div style={{ display: "flex", gap: 8, flexWrap: "wrap", marginBottom: 10 }}>
+                    {[60,75,120,144,165,240,280,360].map(r => (
+                      <button key={r} onClick={() => setFpsHz(r)} style={{ background: fpsHz === r ? G : "#0a0a0a", color: fpsHz === r ? "#000" : "#666", border: `1px solid ${fpsHz === r ? G : "#111"}`, fontFamily: mono, fontWeight: fpsHz === r ? 800 : 400, fontSize: 10, padding: "7px 12px", cursor: "pointer", borderRadius: 5 }}>{r}Hz</button>
+                    ))}
+                  </div>
+                  <input type="number" value={fpsHz} onChange={e => setFpsHz(e.target.value)} placeholder="Custom Hz..." style={{ width: "100%", background: "#0a0a0a", border: "1px solid #111", borderRadius: 6, padding: "8px 12px", color: "#ccc", fontFamily: mono, fontSize: 11, outline: "none" }} />
+                  {sd?.gpu?.maxRefresh && <div style={{ fontSize: 9, color: G, marginTop: 6 }}>✓ Detected: {sd.gpu.maxRefresh}Hz monitor</div>}
+                </div>
+                <div style={{ background: "#060606", border: "1px solid #0e0e0e", borderRadius: 10, padding: "20px" }}>
+                  <div style={{ fontSize: 9, color: G, letterSpacing: 2, marginBottom: 12 }}>SYNC TECHNOLOGY</div>
+                  {[
+                    { id: "gsync", label: "G-Sync / FreeSync Premium" },
+                    { id: "freesync", label: "FreeSync Basic" },
+                    { id: "novrr", label: "No VRR — Competitive" },
+                    { id: "nopq", label: "No VRR — Quality/Stable" },
+                  ].map(v => (
+                    <div key={v.id} onClick={() => setFpsVrr(v.id)} style={{ display: "flex", alignItems: "center", gap: 10, padding: "8px 0", cursor: "pointer" }}>
+                      <div style={{ width: 14, height: 14, borderRadius: "50%", border: `2px solid ${fpsVrr === v.id ? G : "#333"}`, background: fpsVrr === v.id ? G : "transparent", flexShrink: 0, transition: "all 0.15s" }} />
+                      <span style={{ fontSize: 10, color: fpsVrr === v.id ? "#ddd" : "#555" }}>{v.label}</span>
+                    </div>
+                  ))}
+                </div>
+              </div>
+              <div style={{ background: "#060606", border: `2px solid ${G}33`, borderRadius: 14, padding: "28px", textAlign: "center", marginBottom: 14 }}>
+                <div style={{ fontSize: 9, color: "#555", letterSpacing: 3, marginBottom: 8 }}>YOUR OPTIMAL FPS CAP</div>
+                <div style={{ fontFamily: bebas, fontSize: 110, color: G, lineHeight: 1, marginBottom: 6 }}>{chosen.cap}</div>
+                <div style={{ fontSize: 11, color: "#888", marginBottom: 12 }}>{chosen.label}</div>
+                <div style={{ fontSize: 10, color: "#555", maxWidth: 480, margin: "0 auto", lineHeight: 1.7 }}>{chosen.why}</div>
+              </div>
+              <div style={{ display: "grid", gridTemplateColumns: "repeat(3,1fr)", gap: 10 }}>
+                {[
+                  { l: "Best place to set cap", v: "In-game settings → then NVIDIA/AMD Control Panel", c: G },
+                  { l: "Most accurate cap tool", v: "RTSS (RivaTuner Statistics Server) — lowest overhead", c: Y },
+                  { l: "Have NVIDIA Reflex?", v: "Reflex auto-caps for you — set game to Unlimited", c: B },
+                ].map(t => (
+                  <div key={t.l} style={{ background: "#060606", border: `1px solid ${t.c}22`, borderRadius: 8, padding: "14px 14px" }}>
+                    <div style={{ fontSize: 9, color: t.c, letterSpacing: 1, marginBottom: 6 }}>{t.l.toUpperCase()}</div>
+                    <div style={{ fontSize: 10, color: "#888", lineHeight: 1.5 }}>{t.v}</div>
+                  </div>
+                ))}
+              </div>
+            </div>
+          );
+        })()}
+
+        {/* STARTUP */}
         {tab === "startup" && (
           <div>
             <div style={{ fontFamily: bebas, fontSize: 30, color: "#fff", letterSpacing: 6, marginBottom: 8 }}>STARTUP ANALYZER</div>
             {startupLoading && <div style={{ fontSize: 10, color: G, marginBottom: 12 }}>⟳ Scanning startup entries...</div>}
-            {realStartup && <div style={{ fontSize: 10, color: G, marginBottom: 12 }}>✓ {realStartup.length} real startup entries detected</div>}
-            <div style={{ fontSize: 10, color: R, marginBottom: 18 }}>⚠ {startupApps.length} startup apps detected — slowing boot and wasting RAM</div>
+            {realStartup && <div style={{ fontSize: 10, color: G, marginBottom: 12 }}>✓ {realStartup.length} real startup entries detected from your system</div>}
+            <div style={{ fontSize: 10, color: R, marginBottom: 18 }}>⚠ {startupApps.length} startup apps — slowing boot and wasting RAM</div>
             <div style={{ display: "flex", flexDirection: "column", gap: 8 }}>
               {startupApps.map((app, idx) => {
                 const dis = disabledStartup.has(app.name);
@@ -1012,7 +1143,7 @@ export default function App() {
           </div>
         )}
 
-        {/* THERMAL TAB */}
+        {/* THERMAL */}
         {tab === "thermal" && (
           <div>
             <div style={{ fontFamily: bebas, fontSize: 30, color: "#fff", letterSpacing: 6, marginBottom: 20 }}>THERMAL MONITOR</div>
@@ -1046,9 +1177,9 @@ export default function App() {
               <div style={{ fontSize: 9, color: Y, letterSpacing: 2, marginBottom: 14 }}>COOLING RECOMMENDATIONS</div>
               {[
                 { icon: "✅", tip: "Temps are healthy. Current cooling is adequate for stock operation." },
-                { icon: "💡", tip: sd?.cpu?.name?.includes("5800X3D") ? "5800X3D has heat-sensitive 3D V-Cache. Keep under 75C under load. High-end AIO recommended." : "For overclocking, keep CPU under 80C under full load. AIO 240mm+ recommended." },
-                { icon: "🔧", tip: "If PC is 2+ years old, reapply thermal paste. Dried paste adds 10-20C." },
-                { icon: "🌡️", tip: "Keep case ambient under 35C. Front intake, rear/top exhaust fan layout." }
+                { icon: "💡", tip: sd?.cpu?.name?.includes("5800X3D") ? "5800X3D has heat-sensitive 3D V-Cache. Keep under 75C under load. High-end AIO recommended." : "For overclocking keep CPU under 80C. AIO 240mm+ recommended." },
+                { icon: "🔧", tip: "If PC is 2+ years old, reapply thermal paste. Dried paste adds 10-20C to temperatures." },
+                { icon: "🌡️", tip: "Keep case ambient under 35C. Use front intake and rear/top exhaust fan layout." }
               ].map((r, i) => (
                 <div key={i} style={{ display: "flex", gap: 12, padding: "10px 14px", background: "#0a0a0a", borderRadius: 8, border: "1px solid #111", marginBottom: 8 }}>
                   <span style={{ fontSize: 16 }}>{r.icon}</span>
@@ -1059,7 +1190,7 @@ export default function App() {
           </div>
         )}
 
-        {/* PRESETS TAB */}
+        {/* PRESETS */}
         {tab === "presets" && (
           <div>
             <div style={{ fontFamily: bebas, fontSize: 30, color: "#fff", letterSpacing: 6, marginBottom: 4 }}>COMMUNITY PRESETS</div>
@@ -1084,12 +1215,12 @@ export default function App() {
             </div>
             <div style={{ background: "#060606", border: `1px solid ${G}15`, borderRadius: 10, padding: "18px 20px" }}>
               <div style={{ fontSize: 9, color: G, letterSpacing: 2, marginBottom: 8 }}>SHARE YOUR PROFILE</div>
-              <div style={{ fontSize: 10, color: "#555", marginBottom: 14 }}>Export your current tweak selection. Share with friends or post in the community.</div>
+              <div style={{ fontSize: 10, color: "#555", marginBottom: 14 }}>Export your current tweak selection. Share with friends or the community.</div>
               <div style={{ display: "flex", gap: 10 }}>
                 <button onClick={async () => {
                   if (!inElectron) { alert("Export only works in the desktop app"); return; }
                   try {
-                    const res = await window.winforge.saveProfile({ name: "MyProfile", tweaks: Array.from(selectedTweaks), profile, exportedAt: new Date().toISOString(), version: "1.4.0" });
+                    const res = await window.winforge.saveProfile({ name: "MyProfile", tweaks: Array.from(selectedTweaks), profile, exportedAt: new Date().toISOString(), version: "1.5.0" });
                     if (res.success) alert("Profile exported!");
                   } catch { alert("Export failed"); }
                 }} style={{ background: `${G}15`, color: G, border: `1px solid ${G}33`, fontFamily: mono, fontWeight: 700, fontSize: 10, padding: "10px 20px", cursor: "pointer", borderRadius: 6 }}>📤 Export ({selectedTweaks.size} tweaks)</button>
@@ -1110,66 +1241,58 @@ export default function App() {
           </div>
         )}
 
-        {/* SETTINGS TAB */}
+        {/* SETTINGS */}
         {tab === "settings" && (
           <div>
             <div style={{ fontFamily: bebas, fontSize: 30, color: "#fff", letterSpacing: 6, marginBottom: 4 }}>SETTINGS</div>
             <div style={{ fontSize: 9, color: "#555", letterSpacing: 2, marginBottom: 24 }}>MANAGE YOUR VAPERS OPTI CONFIGURATION</div>
 
-            {/* Junk cleaner */}
             <div style={{ background: "#060606", border: `1px solid ${B}22`, borderRadius: 10, padding: "20px 22px", marginBottom: 14 }}>
               <div style={{ fontSize: 13, color: "#e0e0e0", fontWeight: 700, marginBottom: 6 }}>🧹 Junk File Cleaner</div>
-              <div style={{ fontSize: 10, color: "#555", lineHeight: 1.6, marginBottom: 16 }}>
-                Cleans temp files, Windows Update cache, NVIDIA DX/GL shader cache, D3D cache. Frees disk space and can reduce stutter from corrupted shader cache.
-              </div>
+              <div style={{ fontSize: 10, color: "#555", lineHeight: 1.6, marginBottom: 16 }}>Cleans temp files, Windows Update cache, NVIDIA DX/GL shader cache, D3D cache. Fixes stutter caused by corrupted shader cache.</div>
               {cleanResult && <div style={{ fontSize: 10, color: G, marginBottom: 12 }}>✓ {cleanResult}</div>}
-              <button onClick={runClean} disabled={cleaning || !inElectron} style={{ background: cleaning ? "#111" : `${B}15`, color: cleaning ? "#444" : B, border: `1px solid ${B}33`, fontFamily: mono, fontWeight: 700, fontSize: 10, padding: "10px 20px", cursor: cleaning ? "default" : "pointer", borderRadius: 6, letterSpacing: 1 }}>
+              <button onClick={runClean} disabled={cleaning || !inElectron} style={{ background: cleaning ? "#111" : `${B}15`, color: cleaning ? "#444" : B, border: `1px solid ${B}33`, fontFamily: mono, fontWeight: 700, fontSize: 10, padding: "10px 20px", cursor: cleaning ? "default" : "pointer", borderRadius: 6 }}>
                 {cleaning ? "⟳ Cleaning..." : "🧹 Clean Junk Files"}
               </button>
             </div>
 
-            {/* Undo tweaks */}
             <div style={{ background: "#060606", border: `1px solid ${R}22`, borderRadius: 10, padding: "20px 22px", marginBottom: 14 }}>
               <div style={{ fontSize: 13, color: "#e0e0e0", fontWeight: 700, marginBottom: 6 }}>🔄 Undo All Tweaks</div>
-              <div style={{ fontSize: 10, color: "#555", lineHeight: 1.6, marginBottom: 16 }}>
-                Roll back all optimizations using the Windows System Restore point created before applying. Restores your PC to its exact state before Vapers Opti made any changes.
-              </div>
-              <button onClick={() => { if (window.confirm("Open System Restore to roll back all changes?")) { if (inElectron) window.winforge.applyTweaks(["open_restore"]); } }} style={{ background: `${R}15`, color: R, border: `1px solid ${R}33`, fontFamily: mono, fontWeight: 700, fontSize: 10, padding: "10px 20px", cursor: "pointer", borderRadius: 6, letterSpacing: 1 }}>
-                🔄 Open System Restore
-              </button>
+              <div style={{ fontSize: 10, color: "#555", lineHeight: 1.6, marginBottom: 16 }}>Roll back all optimizations using the Windows System Restore point created before applying tweaks.</div>
+              <button onClick={() => { if (window.confirm("Open System Restore to roll back all changes?")) { if (inElectron) window.winforge.applyTweaks(["open_restore"]); } }} style={{ background: `${R}15`, color: R, border: `1px solid ${R}33`, fontFamily: mono, fontWeight: 700, fontSize: 10, padding: "10px 20px", cursor: "pointer", borderRadius: 6 }}>🔄 Open System Restore</button>
             </div>
 
-            {/* Re-scan */}
             <div style={{ background: "#060606", border: `1px solid ${G}22`, borderRadius: 10, padding: "20px 22px", marginBottom: 14 }}>
               <div style={{ fontSize: 13, color: "#e0e0e0", fontWeight: 700, marginBottom: 6 }}>🔍 Re-Scan System</div>
-              <div style={{ fontSize: 10, color: "#555", lineHeight: 1.6, marginBottom: 16 }}>
-                Run the hardware scan again to get updated performance score after applying tweaks.
-              </div>
-              <button onClick={() => setPage("scan")} style={{ background: `${G}15`, color: G, border: `1px solid ${G}33`, fontFamily: mono, fontWeight: 700, fontSize: 10, padding: "10px 20px", cursor: "pointer", borderRadius: 6, letterSpacing: 1 }}>
-                🔍 Run New Scan
-              </button>
+              <div style={{ fontSize: 10, color: "#555", lineHeight: 1.6, marginBottom: 16 }}>Run a new hardware scan to get updated performance score and detect new issues after applying tweaks.</div>
+              <button onClick={() => { setRealScan(null); setPage("scan"); }} style={{ background: `${G}15`, color: G, border: `1px solid ${G}33`, fontFamily: mono, fontWeight: 700, fontSize: 10, padding: "10px 20px", cursor: "pointer", borderRadius: 6 }}>🔍 Run New Scan</button>
             </div>
 
-            {/* Reset profile */}
             <div style={{ background: "#060606", border: "1px solid #1a1a1a", borderRadius: 10, padding: "20px 22px", marginBottom: 14 }}>
               <div style={{ fontSize: 13, color: "#e0e0e0", fontWeight: 700, marginBottom: 6 }}>🗑️ Reset Profile</div>
-              <div style={{ fontSize: 10, color: "#555", lineHeight: 1.6, marginBottom: 16 }}>
-                Clear all selected tweaks and reset your profile. Does not undo applied tweaks — use System Restore for that.
-              </div>
-              <button onClick={() => { clearAll(); setProfile({ mode: null, games: [], platforms: [], competitive: false }); setTab("tweaks"); }} style={{ background: "transparent", color: "#555", border: "1px solid #222", fontFamily: mono, fontWeight: 700, fontSize: 10, padding: "10px 20px", cursor: "pointer", borderRadius: 6, letterSpacing: 1 }}>
-                🗑️ Reset Profile
-              </button>
+              <div style={{ fontSize: 10, color: "#555", lineHeight: 1.6, marginBottom: 16 }}>Clear all selected tweaks and reset your profile. Does not undo applied tweaks.</div>
+              <button onClick={() => { clearAll(); setProfile({ mode: null, games: [], platforms: [], competitive: false }); setTab("tweaks"); }} style={{ background: "transparent", color: "#555", border: "1px solid #222", fontFamily: mono, fontWeight: 700, fontSize: 10, padding: "10px 20px", cursor: "pointer", borderRadius: 6 }}>🗑️ Reset Profile</button>
             </div>
 
-            {/* Hardware info */}
             {sd && (
               <div style={{ background: "#060606", border: "1px solid #0e0e0e", borderRadius: 10, padding: "20px 22px" }}>
                 <div style={{ fontSize: 9, color: G, letterSpacing: 2, marginBottom: 14 }}>DETECTED HARDWARE</div>
                 <div style={{ display: "grid", gridTemplateColumns: "repeat(2,1fr)", gap: 10 }}>
-                  {[["CPU", sd.cpu.name],["Cores/Threads", `${sd.cpu.cores}C / ${sd.cpu.threads}T`],["GPU", sd.gpu.name],["VRAM", `${sd.gpu.vramMB}MB`],["RAM", `${sd.ram.totalGB}GB @ ${sd.ram.speedMHz}MHz`],["Storage", `${sd.storage.model} · ${sd.storage.isNvme ? "NVMe" : "SATA"}`],["Network", `${sd.network.name} · ${sd.network.isEthernet ? "Ethernet" : "WiFi"}`],["Windows", `${sd.windows.version} Build ${sd.windows.build}`]].map(([label, value]) => (
+                  {[
+                    ["CPU", sd.cpu.name],
+                    ["Cores/Threads", `${sd.cpu.cores}C / ${sd.cpu.threads}T`],
+                    ["GPU", sd.gpu.name],
+                    ["VRAM", `${sd.gpu.vramMB}MB`],
+                    ["RAM", `${sd.ram.totalGB}GB @ ${sd.ram.speedMHz}MHz`],
+                    ["Storage", `${sd.storage.model} · ${sd.storage.isNvme ? "NVMe" : "SATA"}`],
+                    ["Network", `${sd.network.name} · ${sd.network.isEthernet ? "Ethernet" : "WiFi"}`],
+                    ["Windows", `Build ${sd.windows.build}`],
+                    ["VBS Status", sd.vbsEnabled ? "⚠ ENABLED - costing FPS" : "✓ Disabled"],
+                    ["MPO Status", sd.mpoEnabled ? "⚠ ENABLED - may cause stutter" : "✓ Disabled"],
+                  ].map(([label, value]) => (
                     <div key={label} style={{ padding: "10px 14px", background: "#0a0a0a", borderRadius: 8, border: "1px solid #111" }}>
                       <div style={{ fontSize: 9, color: "#444", marginBottom: 4 }}>{label}</div>
-                      <div style={{ fontSize: 10, color: "#888" }}>{value}</div>
+                      <div style={{ fontSize: 10, color: value?.includes("⚠") ? Y : "#888" }}>{value}</div>
                     </div>
                   ))}
                 </div>
@@ -1223,13 +1346,13 @@ export default function App() {
         <div style={{ fontSize: 11, color: "#666", marginBottom: 14, lineHeight: 1.6 }}>"Just ran Vapers Opti - went from {score} to {projected}/100. {selectedTweaks.size} tweaks applied. PC feels brand new 🔥 #VapersOpti"</div>
         <div style={{ display: "flex", gap: 8, justifyContent: "center" }}>
           <button style={{ background: "#1da1f2", color: "#fff", border: "none", fontFamily: mono, fontWeight: 700, fontSize: 9, padding: "7px 16px", cursor: "pointer", borderRadius: 4 }}>Share on X</button>
-          <button onClick={() => navigator.clipboard?.writeText(`Just ran Vapers Opti - went from ${score} to ${projected}/100. ${selectedTweaks.size} tweaks applied. #VapersOpti`)} style={{ background: "#5865f2", color: "#fff", border: "none", fontFamily: mono, fontWeight: 700, fontSize: 9, padding: "7px 16px", cursor: "pointer", borderRadius: 4 }}>Copy for Discord</button>
+          <button onClick={() => navigator.clipboard?.writeText(`Just ran Vapers Opti - went from ${score} to ${projected}/100. ${selectedTweaks.size} tweaks applied. PC feels brand new 🔥 #VapersOpti`)} style={{ background: "#5865f2", color: "#fff", border: "none", fontFamily: mono, fontWeight: 700, fontSize: 9, padding: "7px 16px", cursor: "pointer", borderRadius: 4 }}>Copy for Discord</button>
         </div>
       </div>
       <div style={{ display: "flex", gap: 10 }}>
-        {rebootNeeded > 0 && <button onClick={() => inElectron && window.winforge.applyTweaks(["restart_now"])} style={{ background: G, color: "#000", border: "none", fontFamily: mono, fontWeight: 800, fontSize: 11, letterSpacing: 2, padding: "13px 28px", cursor: "pointer", borderRadius: 4, textTransform: "uppercase" }}>🔄 Restart Now</button>}
+        {rebootNeeded > 0 && <button style={{ background: G, color: "#000", border: "none", fontFamily: mono, fontWeight: 800, fontSize: 11, letterSpacing: 2, padding: "13px 28px", cursor: "pointer", borderRadius: 4, textTransform: "uppercase" }}>🔄 Restart Now</button>}
         <button onClick={() => setPage("dashboard")} style={{ background: "transparent", color: "#666", border: "1px solid #111", fontFamily: mono, fontSize: 11, letterSpacing: 2, padding: "13px 24px", cursor: "pointer", borderRadius: 4, textTransform: "uppercase" }}>Back to Dashboard</button>
-        <button onClick={() => { setPage("splash"); setSelectedTweaks(new Set()); setApplyLog([]); setApplyProgress(0); setScanStep(0); setProfile({ mode: null, games: [], platforms: [], competitive: false }); setRealScan(null); setRealStartup(null); setThermalData(null); setPingData(null); setCleanResult(null); }}
+        <button onClick={() => { setPage("splash"); setSelectedTweaks(new Set()); setApplyLog([]); setApplyProgress(0); setScanStep(0); setProfile({ mode: null, games: [], platforms: [], competitive: false }); setRealScan(null); setRealStartup(null); setThermalData(null); setPingData(null); setCleanResult(null); setInstalledGames(null); }}
           style={{ background: "transparent", color: "#444", border: "1px solid #0a0a0a", fontFamily: mono, fontSize: 11, letterSpacing: 2, padding: "13px 24px", cursor: "pointer", borderRadius: 4, textTransform: "uppercase" }}>Start Over</button>
       </div>
     </div>
