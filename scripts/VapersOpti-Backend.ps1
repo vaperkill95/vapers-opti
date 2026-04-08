@@ -23,83 +23,122 @@ function Set-RegistryValue($path, $name, $value, $type = "DWord") {
 }
 
 function Get-SystemProfile {
+  # CPU
   Write-Json @{ type="progress"; step="cpu"; message="Scanning CPU..."; percent=10 }
-  $cpu = Get-CimInstance Win32_Processor | Select-Object -First 1
-  $cpuVendor = if ($cpu.Manufacturer -match "AMD") { "amd" } elseif ($cpu.Manufacturer -match "Intel") { "intel" } else { "other" }
+  $cpuName = "Unknown CPU"; $cpuCores = 0; $cpuThreads = 0; $cpuVendor = "other"; $cpuMHz = 0
+  try {
+    $cpu = Get-CimInstance Win32_Processor -ErrorAction Stop | Select-Object -First 1
+    $cpuName = $cpu.Name.Trim()
+    $cpuCores = $cpu.NumberOfCores
+    $cpuThreads = $cpu.NumberOfLogicalProcessors
+    $cpuMHz = $cpu.MaxClockSpeed
+    $cpuVendor = if ($cpu.Manufacturer -match "AMD") { "amd" } elseif ($cpu.Manufacturer -match "Intel") { "intel" } else { "other" }
+  } catch { }
 
+  # GPU
   Write-Json @{ type="progress"; step="gpu"; message="Scanning GPU..."; percent=22 }
-  $gpu = Get-CimInstance Win32_VideoController | Where-Object { $_.AdapterRAM -gt 100MB } | Sort-Object AdapterRAM -Descending | Select-Object -First 1
-  $gpuVendor = if ($gpu.Name -match "NVIDIA|GeForce|RTX|GTX") { "nvidia" } elseif ($gpu.Name -match "AMD|Radeon|RX ") { "amd" } else { "intel" }
+  $gpuName = "Unknown GPU"; $gpuVram = 0; $gpuDriver = ""; $gpuVendor = "nvidia"; $gpuRefresh = 0; $gpuMaxRefresh = 0
+  try {
+    $gpu = Get-CimInstance Win32_VideoController -ErrorAction Stop | Where-Object { $_.AdapterRAM -gt 50MB } | Sort-Object AdapterRAM -Descending | Select-Object -First 1
+    if ($gpu) {
+      $gpuName = $gpu.Name
+      $gpuVram = [math]::Round($gpu.AdapterRAM/1MB)
+      $gpuDriver = $gpu.DriverVersion
+      $gpuRefresh = $gpu.CurrentRefreshRate
+      $gpuMaxRefresh = $gpu.MaxRefreshRate
+      $gpuVendor = if ($gpu.Name -match "NVIDIA|GeForce|RTX|GTX") { "nvidia" } elseif ($gpu.Name -match "AMD|Radeon|RX ") { "amd" } else { "intel" }
+    }
+  } catch { }
 
+  # RAM
   Write-Json @{ type="progress"; step="ram"; message="Scanning Memory..."; percent=35 }
-  $ramSticks = Get-CimInstance Win32_PhysicalMemory
-  $totalRAMGB = [math]::Round(($ramSticks | Measure-Object Capacity -Sum).Sum / 1GB, 1)
-  $ramSpeed = ($ramSticks | Select-Object -First 1).Speed
+  $totalRAMGB = 0; $ramSpeed = 3200; $ramStickCount = 0
+  try {
+    $ramSticks = Get-CimInstance Win32_PhysicalMemory -ErrorAction Stop
+    if ($ramSticks) {
+      $totalRAMGB = [math]::Round(($ramSticks | Measure-Object Capacity -Sum).Sum / 1GB, 1)
+      $ramSpeed = ($ramSticks | Select-Object -First 1).Speed
+      $ramStickCount = ($ramSticks | Measure-Object).Count
+      if (-not $ramSpeed) { $ramSpeed = 3200 }
+    }
+  } catch { }
 
+  # Storage — use WMI fallback if Get-PhysicalDisk hangs
   Write-Json @{ type="progress"; step="storage"; message="Scanning Storage..."; percent=48 }
-  $primaryDisk = Get-PhysicalDisk | Select-Object -First 1
-  $isNvme = $primaryDisk.BusType -eq "NVMe"
-  $isSSD = $primaryDisk.MediaType -eq "SSD" -or $isNvme
+  $diskModel = "Unknown"; $isNvme = $false; $isSSD = $true
+  try {
+    $job = Start-Job { Get-PhysicalDisk | Select-Object -First 1 }
+    $done = Wait-Job $job -Timeout 5
+    if ($done) {
+      $primaryDisk = Receive-Job $job
+      if ($primaryDisk) {
+        $diskModel = $primaryDisk.FriendlyName
+        $isNvme = $primaryDisk.BusType -eq "NVMe"
+        $isSSD = $primaryDisk.MediaType -eq "SSD" -or $isNvme
+      }
+    }
+    Remove-Job $job -Force -ErrorAction SilentlyContinue
+  } catch {
+    # WMI fallback for storage
+    try {
+      $wmiDisk = Get-WmiObject Win32_DiskDrive -ErrorAction Stop | Select-Object -First 1
+      if ($wmiDisk) {
+        $diskModel = $wmiDisk.Model
+        $isNvme = $wmiDisk.Model -match "NVMe|M\.2"
+        $isSSD = $wmiDisk.Model -match "SSD|NVMe|Solid" -or $isNvme
+      }
+    } catch { }
+  }
 
+  # Network
   Write-Json @{ type="progress"; step="network"; message="Scanning Network..."; percent=60 }
-  $nic = Get-NetAdapter | Where-Object { $_.Status -eq "Up" } | Select-Object -First 1
-  $isEthernet = $nic.PhysicalMediaType -eq "802.3"
+  $nicName = "Unknown"; $isEthernet = $false; $nicSpeed = "Unknown"
+  try {
+    $job2 = Start-Job { Get-NetAdapter | Where-Object { $_.Status -eq "Up" } | Select-Object -First 1 }
+    $done2 = Wait-Job $job2 -Timeout 5
+    if ($done2) {
+      $nic = Receive-Job $job2
+      if ($nic) {
+        $nicName = $nic.Name
+        $isEthernet = $nic.PhysicalMediaType -eq "802.3"
+        $nicSpeed = $nic.LinkSpeed
+      }
+    }
+    Remove-Job $job2 -Force -ErrorAction SilentlyContinue
+  } catch { }
 
+  # Windows
   Write-Json @{ type="progress"; step="windows"; message="Auditing Windows..."; percent=72 }
-  $os = Get-CimInstance Win32_OperatingSystem
+  $osVersion = "Windows 11"; $osBuild = "0"
+  try {
+    $os = Get-CimInstance Win32_OperatingSystem -ErrorAction Stop
+    $osVersion = $os.Caption
+    $osBuild = $os.BuildNumber
+  } catch { }
 
+  # Security checks
   Write-Json @{ type="progress"; step="security"; message="Checking security settings..."; percent=82 }
-
-  # Check VBS
-  $vbsStatus = Get-RegistryValue "HKLM:\SYSTEM\CurrentControlSet\Control\DeviceGuard" "EnableVirtualizationBasedSecurity" 1
-  $vbsRunning = (Get-ItemProperty "HKLM:\SYSTEM\CurrentControlSet\Control\DeviceGuard" -ErrorAction SilentlyContinue).EnableVirtualizationBasedSecurity
-
-  # Check MPO
-  $mpoStatus = Get-RegistryValue "HKLM:\SOFTWARE\Microsoft\Windows\Dwm" "OverlayTestMode" 0
-
-  # Check Resizable BAR
-  $reBarPath = "HKLM:\SYSTEM\CurrentControlSet\Control\GraphicsDrivers"
-  $reBar = Get-RegistryValue $reBarPath "ReBarUEFISupported" 0
+  $vbsStatus = 0; $mpoStatus = 0; $reBar = 0
+  try { $vbsStatus = Get-RegistryValue "HKLM:\SYSTEM\CurrentControlSet\Control\DeviceGuard" "EnableVirtualizationBasedSecurity" 0 } catch { }
+  try { $mpoStatus = Get-RegistryValue "HKLM:\SOFTWARE\Microsoft\Windows\Dwm" "OverlayTestMode" 0 } catch { }
+  try { $reBar = Get-RegistryValue "HKLM:\SYSTEM\CurrentControlSet\Control\GraphicsDrivers" "ReBarUEFISupported" 0 } catch { }
 
   Write-Json @{ type="progress"; step="services"; message="Auditing Services..."; percent=90 }
 
   $issues = @()
-
-  $activePlan = (powercfg /getactivescheme) -join ""
-  if ($activePlan -notmatch "e9a42b02") {
-    $issues += @{ id="power_plan"; severity="high"; message="Not using Ultimate Performance power plan" }
-  }
-  if ($ramSpeed -lt 3200) {
-    $issues += @{ id="xmp"; severity="high"; message="RAM running at " + $ramSpeed + "MHz - XMP/EXPO may not be enabled" }
-  }
-  $mouseSpeed = Get-RegistryValue "HKCU:\Control Panel\Mouse" "MouseSpeed" "1"
-  if ($mouseSpeed -ne "0") {
-    $issues += @{ id="mouse_accel"; severity="high"; message="Mouse acceleration is enabled - hurts aim consistency" }
-  }
-  $gameDVR = Get-RegistryValue "HKCU:\SOFTWARE\Microsoft\Windows\CurrentVersion\GameDVR" "AppCaptureEnabled" 1
-  if ($gameDVR -eq 1) {
-    $issues += @{ id="game_bar"; severity="medium"; message="Xbox Game Bar and DVR enabled - background overhead" }
-  }
-  $hags = Get-RegistryValue "HKLM:\SYSTEM\CurrentControlSet\Control\GraphicsDrivers" "HwSchMode" 1
-  if ($hags -ne 2) {
-    $issues += @{ id="hags"; severity="medium"; message="Hardware-Accelerated GPU Scheduling not enabled" }
-  }
-  if ($mpoStatus -ne 5) {
-    $issues += @{ id="mpo"; severity="medium"; message="Multiplane Overlay (MPO) enabled - can cause stutter and driver crashes" }
-  }
-  if ($vbsStatus -eq 1) {
-    $issues += @{ id="vbs"; severity="medium"; message="Virtualization Based Security (VBS) enabled - costs 5-15% FPS" }
-  }
-  if (-not $isSSD) {
-    $issues += @{ id="hdd"; severity="high"; message="Primary drive is HDD - load times significantly impacted" }
-  }
-  if (-not $isEthernet) {
-    $issues += @{ id="wifi"; severity="medium"; message="Using WiFi - Ethernet recommended for online gaming" }
-  }
-  $nagle = Get-RegistryValue "HKLM:\SYSTEM\CurrentControlSet\Services\Tcpip\Parameters" "TcpAckFrequency" 0
-  if ($nagle -ne 1) {
-    $issues += @{ id="nagle"; severity="medium"; message="Nagle's Algorithm enabled - adds packet delay" }
-  }
+  try {
+    $activePlan = (powercfg /getactivescheme 2>$null) -join ""
+    if ($activePlan -notmatch "e9a42b02") { $issues += @{ id="power_plan"; severity="high"; message="Not using Ultimate Performance power plan" } }
+  } catch { }
+  if ($ramSpeed -and $ramSpeed -lt 3200) { $issues += @{ id="xmp"; severity="high"; message="RAM running at " + $ramSpeed + "MHz - XMP/EXPO may not be enabled" } }
+  try { $mouseSpeed = Get-RegistryValue "HKCU:\Control Panel\Mouse" "MouseSpeed" "1"; if ($mouseSpeed -ne "0") { $issues += @{ id="mouse_accel"; severity="high"; message="Mouse acceleration is enabled - hurts aim consistency" } } } catch { }
+  try { $gameDVR = Get-RegistryValue "HKCU:\SOFTWARE\Microsoft\Windows\CurrentVersion\GameDVR" "AppCaptureEnabled" 1; if ($gameDVR -eq 1) { $issues += @{ id="game_bar"; severity="medium"; message="Xbox Game Bar and DVR enabled" } } } catch { }
+  try { $hags = Get-RegistryValue "HKLM:\SYSTEM\CurrentControlSet\Control\GraphicsDrivers" "HwSchMode" 1; if ($hags -ne 2) { $issues += @{ id="hags"; severity="medium"; message="Hardware-Accelerated GPU Scheduling not enabled" } } } catch { }
+  if ($mpoStatus -ne 5) { $issues += @{ id="mpo"; severity="medium"; message="Multiplane Overlay (MPO) enabled - can cause stutter and driver crashes" } }
+  if ($vbsStatus -eq 1) { $issues += @{ id="vbs"; severity="medium"; message="Virtualization Based Security (VBS) enabled - costs 5-15% FPS" } }
+  if (-not $isSSD) { $issues += @{ id="hdd"; severity="high"; message="Primary drive is HDD - load times significantly impacted" } }
+  if (-not $isEthernet) { $issues += @{ id="wifi"; severity="medium"; message="Using WiFi - Ethernet recommended for online gaming" } }
+  try { $nagle = Get-RegistryValue "HKLM:\SYSTEM\CurrentControlSet\Services\Tcpip\Parameters" "TcpAckFrequency" 0; if ($nagle -ne 1) { $issues += @{ id="nagle"; severity="medium"; message="Nagle's Algorithm enabled - adds packet delay" } } } catch { }
 
   $score = 100
   foreach ($issue in $issues) {
@@ -116,12 +155,12 @@ function Get-SystemProfile {
     vbsEnabled = ($vbsStatus -eq 1)
     mpoEnabled = ($mpoStatus -ne 5)
     reBarEnabled = ($reBar -eq 1)
-    cpu     = @{ name=$cpu.Name.Trim(); cores=$cpu.NumberOfCores; threads=$cpu.NumberOfLogicalProcessors; vendor=$cpuVendor; maxClockMHz=$cpu.MaxClockSpeed }
-    gpu     = @{ name=$gpu.Name; vramMB=[math]::Round($gpu.AdapterRAM/1MB); driver=$gpu.DriverVersion; vendor=$gpuVendor; refreshRate=$gpu.CurrentRefreshRate; maxRefresh=$gpu.MaxRefreshRate }
-    ram     = @{ totalGB=$totalRAMGB; speedMHz=$ramSpeed; sticks=$ramSticks.Count }
-    storage = @{ model=$primaryDisk.FriendlyName; isNvme=$isNvme; isSSD=$isSSD }
-    network = @{ name=$nic.Name; isEthernet=$isEthernet; speed=$nic.LinkSpeed }
-    windows = @{ version=$os.Caption; build=$os.BuildNumber }
+    cpu     = @{ name=$cpuName; cores=$cpuCores; threads=$cpuThreads; vendor=$cpuVendor; maxClockMHz=$cpuMHz }
+    gpu     = @{ name=$gpuName; vramMB=$gpuVram; driver=$gpuDriver; vendor=$gpuVendor; refreshRate=$gpuRefresh; maxRefresh=$gpuMaxRefresh }
+    ram     = @{ totalGB=$totalRAMGB; speedMHz=$ramSpeed; sticks=$ramStickCount }
+    storage = @{ model=$diskModel; isNvme=$isNvme; isSSD=$isSSD }
+    network = @{ name=$nicName; isEthernet=$isEthernet; speed=$nicSpeed }
+    windows = @{ version=$osVersion; build=$osBuild }
   }
 }
 
