@@ -16,6 +16,7 @@ const GAMES = [
   { id: "overwatch", name: "Overwatch 2", icon: "🔵" },
   { id: "r6", name: "Rainbow Six", icon: "🛡️" },
   { id: "warzone", name: "Warzone", icon: "☠️" },
+  { id: "division2", name: "The Division 2", icon: "🗽" },
   { id: "forza", name: "Forza Horizon", icon: "🏎️" },
   { id: "battlefield", name: "Battlefield 2042", icon: "💥" },
   { id: "elden", name: "Elden Ring", icon: "⚔️" },
@@ -64,6 +65,8 @@ const ALL_TWEAKS = [
   { id: "net_rss", category: "Network", risk: "safe", title: "Enable Receive Side Scaling", desc: "Distributes network traffic across multiple CPU cores. Reduces NIC bottleneck during online play.", impact: 60, reboot: false },
   { id: "net_interrupt", category: "Network", risk: "recommended", title: "Disable NIC Interrupt Moderation", desc: "Immediate packet processing instead of batching. Maximum network responsiveness for ethernet.", impact: 70, reboot: false },
   { id: "net_ipv6", category: "Network", risk: "safe", title: "Disable IPv6 (DPC Latency Fix)", desc: "IPv6 is a top cause of ndis.sys DPC latency spikes that cause stutters in competitive games. Disabling it forces IPv4-only for lower, more consistent ping.", impact: 65, reboot: true },
+  { id: "net_bulletreg", category: "Network", risk: "recommended", title: "Advanced Network Stack Optimization", desc: "Full TCP/IP stack tuning: DefaultTTL=64, delayed ACK minimized, PMTU discovery on, NIC buffers released immediately, NDIS tracking disabled, congestion algorithm optimized. Sourced from competitive gaming registry configs.", impact: 78, reboot: true },
+  { id: "net_tcpwindow", category: "Network", risk: "recommended", title: "Optimize TCP Window & AFD Buffer", desc: "Sets AFD send/receive window to 16384, enables non-blocking send buffering, disables raw security overhead. Reduces packet round-trip time in fast-paced online games.", impact: 68, reboot: false },
   { id: "dpc_dynamictick", category: "CPU", risk: "recommended", title: "Disable Dynamic Tick (DPC Latency)", desc: "bcdedit /set disabledynamictick yes — prevents Windows from pausing the system timer during idle. Reduces DPC latency spikes that cause audio pops and game micro-stutters.", impact: 70, reboot: true },
   // Memory
   { id: "mem_xmp", category: "Memory", risk: "safe", title: "Verify XMP/EXPO Active", desc: "Checks if RAM is running below rated speed. XMP off can mean 40% less memory bandwidth.", impact: 90, reboot: false },
@@ -169,6 +172,45 @@ const GAME_GUIDES = {
       { category: "Video", setting: "Particle Detail", value: "Low", reason: "Smoke and explosion particles reduced" },
       { category: "Video", setting: "Ambient Occlusion", value: "Disabled", reason: "Expensive effect with zero competitive impact" },
       { category: "Video", setting: "High Dynamic Range", value: "Quality", reason: "HDR improves visibility in dark areas of maps" },
+    ]
+  },
+  apex: {
+    name: "Apex Legends", icon: "🔶", color: "#ff6b35",
+    settings: [
+      { category: "Video", setting: "Display Mode", value: "Full Screen", reason: "Exclusive fullscreen for minimum input lag" },
+      { category: "Video", setting: "Resolution", value: "Native 16:9", reason: "Stretched res worsens hit detection in Apex unlike CS2" },
+      { category: "Video", setting: "V-Sync", value: "Disabled", reason: "Always off in competitive — use FreeSync/G-Sync" },
+      { category: "Video", setting: "NVIDIA Reflex", value: "Enabled + Boost", reason: "Cuts input lag by 30-40ms. Must-enable on NVIDIA cards" },
+      { category: "Video", setting: "Adaptive Resolution FPS Target", value: "0 (Disabled)", reason: "Prevents dynamic resolution changes mid-fight" },
+      { category: "Video", setting: "Anti-Aliasing", value: "None", reason: "None for max FPS. TSAA if targeting 200+ FPS" },
+      { category: "Video", setting: "Texture Streaming Budget", value: "None (use all VRAM)", reason: "Prevents texture pop-in during intense fights" },
+      { category: "Video", setting: "Texture Filtering", value: "Bilinear", reason: "Lower filtering = higher FPS with minimal visual loss" },
+      { category: "Video", setting: "Ambient Occlusion Quality", value: "Disabled", reason: "Major FPS drain with zero competitive benefit" },
+      { category: "Video", setting: "Sun Shadow Coverage", value: "Low", reason: "Shadow reduction for significant FPS gain" },
+      { category: "Video", setting: "Spot Shadow Detail", value: "Disabled", reason: "Dynamic spot shadows eliminated entirely" },
+      { category: "Video", setting: "Volumetric Lighting", value: "Disabled", reason: "God rays and fog effects removed" },
+      { category: "Video", setting: "Dynamic Spot Shadows", value: "Disabled", reason: "Most expensive shadow type — never needed competitively" },
+      { category: "Video", setting: "Model Detail", value: "Low", reason: "Character models identical at all settings for hitboxes" },
+      { category: "Video", setting: "Effects Detail", value: "Low", reason: "Explosion and ability effects reduced. Cleaner fights" },
+    ]
+  },
+  division2: {
+    name: "The Division 2", icon: "🗽", color: "#ff8c00",
+    settings: [
+      { category: "Display", setting: "Display Mode", value: "Fullscreen", reason: "Exclusive fullscreen for best performance and input lag" },
+      { category: "Display", setting: "VSync", value: "Off", reason: "Adds input lag. Use G-Sync/FreeSync instead" },
+      { category: "Display", setting: "Frame Rate Limit", value: "Match monitor refresh rate", reason: "Unlimited causes GPU to run hot with zero benefit in this game" },
+      { category: "Graphics", setting: "Quality Preset", value: "Low or Custom", reason: "Start low and selectively raise only what matters" },
+      { category: "Graphics", setting: "Shadow Quality", value: "Low", reason: "Biggest FPS gain. Division 2 shadows are very expensive" },
+      { category: "Graphics", setting: "Spot Shadows", value: "Off", reason: "Dynamic shadows from lights eliminated" },
+      { category: "Graphics", setting: "Spot Shadow Resolution", value: "Low", reason: "If left on, keep at lowest resolution" },
+      { category: "Graphics", setting: "Particle Detail", value: "Low", reason: "Smoke and explosion effects reduced" },
+      { category: "Graphics", setting: "Reflection Quality", value: "Low", reason: "Reflections are expensive in Division 2's engine" },
+      { category: "Graphics", setting: "Ambient Occlusion", value: "Off", reason: "HBAO+ is extremely expensive in this game" },
+      { category: "Graphics", setting: "Vegetation Quality", value: "Low", reason: "Open world vegetation costs FPS with no gameplay benefit" },
+      { category: "Graphics", setting: "Anisotropic Filtering", value: "8x", reason: "Makes ground textures clear at distance. Cheap to enable" },
+      { category: "Graphics", setting: "Sharpening", value: "0.5-0.7", reason: "Adds clarity without performance cost" },
+      { category: "Network", setting: "Server Region", value: "Closest to your location", reason: "Division 2 is very sensitive to ping — always pick nearest" },
     ]
   },
 };
@@ -781,7 +823,7 @@ export default function App() {
 
       {/* Tabs */}
       <div style={{ display: "flex", borderBottom: "1px solid #0a0a0a", padding: "0 24px", overflowX: "auto" }}>
-        {[["tweaks","⚡ Tweaks"],["gameguides","🎮 Game Guides"],["benchmark","📊 Benchmark"],["overclock","🔥 Overclock"],["drivers","🔧 Drivers"],["diagnostics","🔬 Diagnostics"],["nvidia","🟢 NVIDIA"],["fpscalc","🎯 FPS Cap"],["startup","🚀 Startup"],["thermal","🌡️ Thermals"],["presets","⚙️ Presets"],["settings","🔩 Settings"]].map(([id, label]) => (
+        {[["tweaks","⚡ Tweaks"],["gameguides","🎮 Game Guides"],["benchmark","📊 Benchmark"],["overclock","🔥 Overclock"],["drivers","🔧 Drivers"],["diagnostics","🔬 Diagnostics"],["nvidia","🟢 NVIDIA"],["fpscalc","🎯 FPS Cap"],["tools","🛠️ Tools"],["startup","🚀 Startup"],["thermal","🌡️ Thermals"],["presets","⚙️ Presets"],["settings","🔩 Settings"]].map(([id, label]) => (
           <button key={id} onClick={() => setTab(id)} style={{ background: "transparent", border: "none", borderBottom: `2px solid ${tab === id ? G : "transparent"}`, color: tab === id ? G : "#555", fontFamily: mono, fontSize: 10, letterSpacing: 1, padding: "14px 16px", cursor: "pointer", transition: "all 0.15s", whiteSpace: "nowrap" }}>{label}</button>
         ))}
       </div>
@@ -845,7 +887,7 @@ export default function App() {
                   <div style={{ fontSize: 9, color: guide.color }}>→ Open Settings Guide</div>
                 </div>
               ))}
-              {[{ name: "Apex Legends", icon: "🔶" },{ name: "Rainbow Six Siege", icon: "🛡️" }].map(g => (
+              {[{ name: "Rainbow Six Siege", icon: "🛡️" },{ name: "Overwatch 2", icon: "🔵" }].map(g => (
                 <div key={g.name} style={{ background: "#040404", border: "1px solid #0a0a0a", borderRadius: 12, padding: "20px 22px", opacity: 0.4 }}>
                   <div style={{ fontSize: 28, marginBottom: 10 }}>{g.icon}</div>
                   <div style={{ fontSize: 13, color: "#555", fontWeight: 700, marginBottom: 6 }}>{g.name}</div>
@@ -1103,6 +1145,108 @@ export default function App() {
             </div>
           );
         })()}
+
+        {/* TOOLS */}
+        {tab === "tools" && (
+          <div>
+            <div style={{ fontFamily: bebas, fontSize: 30, color: "#fff", letterSpacing: 6, marginBottom: 4 }}>COMMUNITY TOOLS</div>
+            <div style={{ fontSize: 9, color: "#555", letterSpacing: 2, marginBottom: 20 }}>TRUSTED FREE TOOLS USED BY PRO OPTIMIZERS AND COMPETITIVE PLAYERS</div>
+            <div style={{ display: "grid", gridTemplateColumns: "repeat(2,1fr)", gap: 10 }}>
+              {[
+                {
+                  name: "NVCleanstall", icon: "🟢", color: G,
+                  desc: "Install NVIDIA drivers with only what you need. Removes GeForce Experience, Telemetry, HD Audio, PhysX bloat. Cleaner driver = lower input lag. AllSkillX3D recommends DDU + driver only install.",
+                  url: "techpowerup.com/nvcleanstall",
+                  use: "Before every GPU driver update",
+                  tags: ["NVIDIA", "Driver", "Input Lag"]
+                },
+                {
+                  name: "Display Driver Uninstaller (DDU)", icon: "🗑️", color: Y,
+                  desc: "Completely removes old GPU drivers before installing new ones. Essential before NVCleanstall. Old driver remnants cause stutters, crashes and input lag.",
+                  url: "guru3d.com/ddu",
+                  use: "Boot into Safe Mode, run DDU, then install fresh driver",
+                  tags: ["NVIDIA", "AMD", "Driver"]
+                },
+                {
+                  name: "NVIDIA Profile Inspector", icon: "🔍", color: G,
+                  desc: "Deep NVIDIA driver settings beyond the Control Panel. Force ReBAR per-game, tweak frame pacing, adjust rendering flags. Used by competitive players for per-game optimization.",
+                  url: "github.com/Orbmu2k/nvidiaProfileInspector",
+                  use: "Advanced NVIDIA per-game settings",
+                  tags: ["NVIDIA", "Advanced", "ReBAR"]
+                },
+                {
+                  name: "MSI Afterburner + RTSS", icon: "📊", color: R,
+                  desc: "GPU overclocking + RivaTuner Statistics Server for the most accurate FPS cap available. RTSS framerate limiter has the lowest overhead of any cap method.",
+                  url: "msi.com/afterburner",
+                  use: "GPU OC and accurate FPS capping",
+                  tags: ["GPU", "OC", "FPS Cap"]
+                },
+                {
+                  name: "LatencyMon", icon: "🔬", color: B,
+                  desc: "Diagnoses DPC latency issues. Shows exactly which driver is causing stutters, audio pops, and input lag spikes. Run for 2 minutes while gaming to identify your problem driver.",
+                  url: "resplendence.com/latencymon",
+                  use: "Diagnosing stutters and audio pops",
+                  tags: ["DPC", "Latency", "Diagnostic"]
+                },
+                {
+                  name: "HWiNFO64", icon: "🌡️", color: Y,
+                  desc: "Best hardware monitoring tool. Shows real CPU core temps, GPU hotspot, RAM usage, VRM temps. Essential for checking if thermal throttling is killing your performance.",
+                  url: "hwinfo.com",
+                  use: "Real-time hardware monitoring",
+                  tags: ["Temps", "Monitoring", "Thermal"]
+                },
+                {
+                  name: "CPU-Z", icon: "🔲", color: "#aaaaff",
+                  desc: "Verify XMP is active, check RAM timings, confirm CPU speed. Free and lightweight. Use after enabling XMP in BIOS to confirm it's actually running at rated speed.",
+                  url: "cpuid.com/softwares/cpu-z.html",
+                  use: "Verify RAM speed and XMP status",
+                  tags: ["CPU", "RAM", "XMP"]
+                },
+                {
+                  name: "GPU-Z", icon: "🎮", color: G,
+                  desc: "Verify Resizable BAR is active (check BAR1 size), see GPU clocks, VRAM usage, driver version. Essential for confirming ReBAR is working after BIOS enable.",
+                  url: "techpowerup.com/gpuz",
+                  use: "Verify ReBAR, GPU clocks, VRAM",
+                  tags: ["GPU", "ReBAR", "Monitoring"]
+                },
+                {
+                  name: "HIDUSBF (Mouse Polling Rate)", icon: "🖱️", color: "#ff88ff",
+                  desc: "Overclock your mouse USB polling rate beyond 1000Hz. Competitive players use 2000Hz-8000Hz for smoother tracking. Requires Memory Integrity disabled. Used by high-level FPS players.",
+                  url: "github.com/LordOfMice/hidusbf",
+                  use: "Mouse polling rate 2000-8000Hz",
+                  tags: ["Mouse", "Input", "Advanced"]
+                },
+                {
+                  name: "Chris Titus Tech WinUtil", icon: "🖥️", color: "#66aaff",
+                  desc: "Open source Windows debloat and tweaking utility. Removes Windows bloat, installs tweaks via PowerShell. Complements Vapers Opti for deep Windows cleanup.",
+                  url: "github.com/ChrisTitusTech/winutil",
+                  use: "Deep Windows debloat",
+                  tags: ["Debloat", "Windows", "Open Source"]
+                },
+              ].map(tool => (
+                <div key={tool.name} style={{ background: "#060606", border: `1px solid ${tool.color}22`, borderRadius: 12, padding: "18px 20px", display: "flex", flexDirection: "column", gap: 8 }}>
+                  <div style={{ display: "flex", justifyContent: "space-between", alignItems: "flex-start" }}>
+                    <div style={{ display: "flex", gap: 10, alignItems: "center" }}>
+                      <span style={{ fontSize: 22 }}>{tool.icon}</span>
+                      <span style={{ fontSize: 13, color: "#e0e0e0", fontWeight: 700 }}>{tool.name}</span>
+                    </div>
+                    <div style={{ display: "flex", gap: 4, flexWrap: "wrap", justifyContent: "flex-end" }}>
+                      {tool.tags.map(t => <span key={t} style={{ fontFamily: mono, fontSize: 7, color: tool.color, border: `1px solid ${tool.color}33`, borderRadius: 3, padding: "2px 5px" }}>{t}</span>)}
+                    </div>
+                  </div>
+                  <p style={{ fontSize: 10, color: "#666", lineHeight: 1.6, margin: 0 }}>{tool.desc}</p>
+                  <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginTop: 4 }}>
+                    <span style={{ fontSize: 9, color: "#444" }}>📌 {tool.use}</span>
+                    <span style={{ fontSize: 9, color: tool.color, fontFamily: mono }}>→ {tool.url}</span>
+                  </div>
+                </div>
+              ))}
+            </div>
+            <div style={{ marginTop: 14, padding: "14px 18px", background: `${Y}08`, border: `1px solid ${Y}15`, borderRadius: 10, fontSize: 10, color: "#666", lineHeight: 1.7 }}>
+              💡 <strong style={{ color: Y }}>AllSkillX3D's core method:</strong> DDU clean uninstall → NVCleanstall driver-only install (no GeForce Experience) → NVIDIA Control Panel tuned → Advanced TCP/IP network stack tweaks. His specialty is fixing packet burst and internet latency in CoD, Fortnite, Valorant.
+            </div>
+          </div>
+        )}
 
         {/* STARTUP */}
         {tab === "startup" && (

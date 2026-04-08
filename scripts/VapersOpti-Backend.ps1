@@ -139,7 +139,8 @@ function Get-InstalledGames {
     @{ id="battlefield"; name="Battlefield 2042"; paths=@("C:\Program Files\EA Games\Battlefield 2042") },
     @{ id="rocketleague"; name="Rocket League"; paths=@("C:\Program Files\Epic Games\rocketleague","C:\Program Files (x86)\Steam\steamapps\common\rocketleague") },
     @{ id="forza"; name="Forza Horizon"; paths=@("C:\XboxGames\Forza Horizon 5") },
-    @{ id="elden"; name="Elden Ring"; paths=@("C:\Program Files (x86)\Steam\steamapps\common\ELDEN RING") }
+    @{ id="elden"; name="Elden Ring"; paths=@("C:\Program Files (x86)\Steam\steamapps\common\ELDEN RING") },
+    @{ id="division2"; name="The Division 2"; paths=@("C:\Program Files (x86)\Ubisoft\Ubisoft Game Launcher\games\Tom Clancy's The Division 2","C:\Program Files\Ubisoft\Ubisoft Game Launcher\games\Tom Clancy's The Division 2","C:\XboxGames\Tom Clancy's The Division 2") }
   )
 
   $steamLibraries = @("C:\Program Files (x86)\Steam\steamapps\common","C:\Program Files\Steam\steamapps\common")
@@ -417,6 +418,64 @@ function Apply-Tweaks($ids) {
             Set-NetAdapterAdvancedProperty -Name $adapter.Name -DisplayName "Interrupt Moderation" -DisplayValue "Disabled" -ErrorAction SilentlyContinue
           }
           $result.success = $true; $result.message = "NIC interrupt moderation disabled"
+        }
+        "net_bulletreg" {
+          # BulletReg advanced TCP/IP stack — competitive gaming registry config
+          Set-RegistryValue "HKLM:\SOFTWARE\Microsoft\MSMQ\Parameters" "TCPNoDelay" 1
+          Set-RegistryValue "HKLM:\SYSTEM\CurrentControlSet\Services\Tcpip\Parameters" "DefaultTTL" 64
+          Set-RegistryValue "HKLM:\SYSTEM\CurrentControlSet\Services\Tcpip\Parameters" "TCP1323Opts" 1
+          Set-RegistryValue "HKLM:\SYSTEM\CurrentControlSet\Services\Tcpip\Parameters" "EnableWsd" 0
+          Set-RegistryValue "HKLM:\SYSTEM\CurrentControlSet\Services\Tcpip\Parameters" "TcpTimedWaitDelay" 32
+          Set-RegistryValue "HKLM:\SYSTEM\CurrentControlSet\Services\Tcpip\Parameters" "EnableICMPRedirect" 1
+          Set-RegistryValue "HKLM:\SYSTEM\CurrentControlSet\Services\Tcpip\Parameters" "EnablePMTUDiscovery" 1
+          Set-RegistryValue "HKLM:\SYSTEM\CurrentControlSet\Services\Tcpip\Parameters" "TcpMaxDupAcks" 2
+          Set-RegistryValue "HKLM:\SYSTEM\CurrentControlSet\Services\Tcpip\Parameters" "SackOpts" 0
+          Set-RegistryValue "HKLM:\SYSTEM\CurrentControlSet\Services\Tcpip\Parameters" "DelayedAckFrequency" 1
+          Set-RegistryValue "HKLM:\SYSTEM\CurrentControlSet\Services\Tcpip\Parameters" "DelayedAckTicks" 1
+          Set-RegistryValue "HKLM:\SYSTEM\CurrentControlSet\Services\Tcpip\Parameters" "CongestionAlgorithm" 1
+          Set-RegistryValue "HKLM:\SYSTEM\CurrentControlSet\Services\Tcpip\Parameters" "FastCopyReceiveThreshold" 16384
+          Set-RegistryValue "HKLM:\SYSTEM\CurrentControlSet\Services\Tcpip\Parameters" "FastSendDatagramThreshold" 16384
+          # NDIS optimization
+          Set-RegistryValue "HKLM:\SYSTEM\CurrentControlSet\Services\NDIS\Parameters" "TrackNblOwner" 0
+          # LanmanServer optimization
+          Set-RegistryValue "HKLM:\SYSTEM\CurrentControlSet\Services\LanmanServer\Parameters" "autodisconnect" 4294967295
+          Set-RegistryValue "HKLM:\SYSTEM\CurrentControlSet\Services\LanmanServer\Parameters" "Size" 3
+          Set-RegistryValue "HKLM:\SYSTEM\CurrentControlSet\Services\LanmanServer\Parameters" "EnableOplocks" 0
+          Set-RegistryValue "HKLM:\SYSTEM\CurrentControlSet\Services\LanmanServer\Parameters" "IRPStackSize" 32
+          Set-RegistryValue "HKLM:\SYSTEM\CurrentControlSet\Services\LanmanServer\Parameters" "SharingViolationDelay" 0
+          Set-RegistryValue "HKLM:\SYSTEM\CurrentControlSet\Services\LanmanServer\Parameters" "SharingViolationRetries" 0
+          # Per-adapter tweaks
+          $nics = Get-ChildItem "HKLM:\SOFTWARE\Microsoft\Windows NT\CurrentVersion\NetworkCards" -ErrorAction SilentlyContinue
+          foreach ($nic in $nics) {
+            $svcName = (Get-ItemProperty $nic.PSPath -ErrorAction SilentlyContinue).ServiceName
+            if ($svcName) {
+              $path = "HKLM:\SYSTEM\CurrentControlSet\Services\Tcpip\Parameters\Interfaces\$svcName"
+              if (Test-Path $path) {
+                Set-ItemProperty $path "TCPNoDelay" 1 -Type DWord -ErrorAction SilentlyContinue
+                Set-ItemProperty $path "TcpAckFrequency" 1 -Type DWord -ErrorAction SilentlyContinue
+                Set-ItemProperty $path "TcpDelAckTicks" 0 -Type DWord -ErrorAction SilentlyContinue
+              }
+            }
+          }
+          $result.success = $true; $result.message = "Advanced TCP/IP stack optimized - 20+ network registry keys applied"; $result.requiresReboot = $true
+        }
+        "net_tcpwindow" {
+          # AFD buffer and TCP window optimization
+          Set-RegistryValue "HKLM:\SYSTEM\CurrentControlSet\Services\AFD\Parameters" "DefaultReceiveWindow" 16384
+          Set-RegistryValue "HKLM:\SYSTEM\CurrentControlSet\Services\AFD\Parameters" "DefaultSendWindow" 16384
+          Set-RegistryValue "HKLM:\SYSTEM\CurrentControlSet\Services\AFD\Parameters" "FastCopyReceiveThreshold" 16384
+          Set-RegistryValue "HKLM:\SYSTEM\CurrentControlSet\Services\AFD\Parameters" "FastSendDatagramThreshold" 16384
+          Set-RegistryValue "HKLM:\SYSTEM\CurrentControlSet\Services\AFD\Parameters" "DynamicSendBufferDisable" 0
+          Set-RegistryValue "HKLM:\SYSTEM\CurrentControlSet\Services\AFD\Parameters" "IgnorePushBitOnReceives" 1
+          Set-RegistryValue "HKLM:\SYSTEM\CurrentControlSet\Services\AFD\Parameters" "NonBlockingSendSpecialBuffering" 1
+          Set-RegistryValue "HKLM:\SYSTEM\CurrentControlSet\Services\AFD\Parameters" "DoNotHoldNicBuffers" 1
+          Set-RegistryValue "HKLM:\SYSTEM\CurrentControlSet\Services\AFD\Parameters" "DisableAddressSharing" 1
+          # DNS priority stack
+          Set-RegistryValue "HKLM:\SYSTEM\CurrentControlSet\Services\Tcpip\ServiceProvider" "DnsPriority" 2000
+          Set-RegistryValue "HKLM:\SYSTEM\CurrentControlSet\Services\Tcpip\ServiceProvider" "HostsPriority" 500
+          Set-RegistryValue "HKLM:\SYSTEM\CurrentControlSet\Services\Tcpip\ServiceProvider" "LocalPriority" 499
+          Set-RegistryValue "HKLM:\SYSTEM\CurrentControlSet\Services\Tcpip\ServiceProvider" "NetbtPriority" 2001
+          $result.success = $true; $result.message = "AFD buffers and TCP window optimized"
         }
         "net_ipv6" {
           # Disable IPv6 on all adapters - fixes ndis.sys DPC latency spikes
